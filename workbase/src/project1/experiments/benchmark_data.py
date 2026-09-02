@@ -7,6 +7,12 @@ from typing import Any
 import numpy as np
 
 from project1.services.data_reader import read_curve_file, read_tabular_file
+from project1.services.dataset_schema import (
+    INSTITUTE_FOUR_SECTION_SCHEMA,
+    LEGACY_VALIDATION_SCHEMA,
+    detect_dataset_schema,
+    is_current_proxy_schema,
+)
 from project1.services.meta_parser import parse_metadata_from_path
 from workbase.common.config_loader import load_config
 from workbase.common.validators import ValidationError, validate_directory_exists, validate_file_exists
@@ -29,6 +35,21 @@ class Sample:
     psi: float
     tsi: float
     mai: float
+    section: str | None = None
+    schema: str = LEGACY_VALIDATION_SCHEMA
+    source_file: str = ""
+
+    @property
+    def speed_parameter(self) -> float:
+        return self.rpm
+
+    @property
+    def flow_parameter(self) -> float:
+        return self.wcor
+
+    @property
+    def source_path(self) -> str:
+        return self.source_file
 
     def get_output(self, name: str) -> float:
         return float(getattr(self, name))
@@ -39,7 +60,20 @@ class Sample:
 
 
 class FlexSample:
-    __slots__ = ("component", "family", "station", "database", "stage", "rpm", "wcor", "xi", "source_path", "_outputs")
+    __slots__ = (
+        "component",
+        "family",
+        "station",
+        "section",
+        "database",
+        "stage",
+        "speed_parameter",
+        "flow_parameter",
+        "xi",
+        "schema",
+        "source_file",
+        "_outputs",
+    )
 
     def __init__(
         self,
@@ -53,17 +87,39 @@ class FlexSample:
         xi: float,
         source_path: str,
         outputs: dict[str, float],
+        section: str | None = None,
+        schema: str = LEGACY_VALIDATION_SCHEMA,
     ) -> None:
         self.component = component
         self.family = family
         self.station = station
+        self.section = section
         self.database = database
         self.stage = stage
-        self.rpm = rpm
-        self.wcor = wcor
+        self.speed_parameter = rpm
+        self.flow_parameter = wcor
         self.xi = xi
-        self.source_path = source_path
+        self.schema = schema
+        self.source_file = source_path
         self._outputs = outputs
+
+    @property
+    def rpm(self) -> float:
+        """Backward-compatible alias for the generic speed parameter."""
+
+        return self.speed_parameter
+
+    @property
+    def wcor(self) -> float:
+        """Backward-compatible alias for the generic flow parameter."""
+
+        return self.flow_parameter
+
+    @property
+    def source_path(self) -> str:
+        """Backward-compatible alias for the canonical source file."""
+
+        return self.source_file
 
     def get_output(self, name: str) -> float:
         return float(self._outputs[name])
@@ -196,6 +252,39 @@ def _resolve_target_columns(columns: list[str], used_columns: set[str]) -> list[
     return [col for col in columns if col not in used_columns]
 
 
+def _metadata_columns(columns: list[str]) -> set[str]:
+    return {
+        matched
+        for logical_field in SCHEMA_CONFIG.schema_metadata
+        for matched in [_match_column(columns, logical_field)]
+        if matched is not None
+    }
+
+
+def inspect_dataset_file(file_path: str | Path) -> dict[str, object]:
+    """Inspect path metadata and header schema without admitting data to training."""
+
+    path = Path(file_path)
+    meta = parse_metadata_from_path(str(path))
+    parsed = read_curve_file(str(path))
+    columns = [str(column) for column in parsed["columns"]]
+    schema = detect_dataset_schema(columns)
+    station = str(meta.get("station") or "MAIN").upper()
+    return {
+        "component": meta.get("component"),
+        "stage": meta.get("stage"),
+        "station": station,
+        "section": meta.get("section"),
+        "speed_parameter": meta.get("speed_parameter"),
+        "flow_parameter": meta.get("flow_parameter"),
+        "xi": None,
+        "schema": schema,
+        "source_file": str(path),
+        "columns": tuple(columns),
+        "trainable": station == "MAIN" and is_current_proxy_schema(schema),
+    }
+
+
 def resolve_1d_input(columns: list[str]) -> tuple[str, str]:
     for logical_input in SCHEMA_CONFIG.schema_inputs:
         matched = _match_column(columns, str(logical_input))
@@ -281,12 +370,18 @@ def load_samples(input_dir: str, radial_mode: str) -> list[FlexSample]:
     samples: list[FlexSample] = []
     for file_path in iter_data_files(input_dir):
         meta = parse_metadata_from_path(str(file_path))
+        station = str(meta.get("station") or "MAIN").upper()
+        if station != "MAIN":
+            continue
         try:
             parsed = read_curve_file(str(file_path))
         except ValueError:
             continue
         columns = parsed["columns"]
         if not columns:
+            continue
+        schema = detect_dataset_schema(columns)
+        if not is_current_proxy_schema(schema):
             continue
         rpm_field = _schema_input_field(0, "rpm")
         wcor_field = _schema_input_field(1, "wcor")
@@ -298,12 +393,9 @@ def load_samples(input_dir: str, radial_mode: str) -> list[FlexSample]:
                 _match_column(columns, rpm_field),
                 _match_column(columns, wcor_field),
                 _match_column(columns, xi_field),
-                _match_column(columns, "component"),
-                _match_column(columns, "stage"),
-                _match_column(columns, "database"),
             )
             if col is not None
-        }
+        } | _metadata_columns(columns)
         output_cols = _resolve_target_columns(columns, used_columns)
         if not output_cols:
             continue
@@ -324,7 +416,6 @@ def load_samples(input_dir: str, radial_mode: str) -> list[FlexSample]:
             outputs = _extract_valid_outputs(row, output_cols)
             if not outputs:
                 continue
-            station = str(meta.get("station") or "MAIN").upper()
             samples.append(
                 FlexSample(
                     component=component,
@@ -337,6 +428,8 @@ def load_samples(input_dir: str, radial_mode: str) -> list[FlexSample]:
                     xi=xi,
                     source_path=str(file_path),
                     outputs=outputs,
+                    section=None,
+                    schema=schema,
                 )
             )
     return samples
@@ -346,12 +439,18 @@ def load_predict_samples(input_dir: str, radial_mode: str) -> list[FlexSample]:
     samples: list[FlexSample] = []
     for file_path in iter_data_files(input_dir):
         meta = parse_metadata_from_path(str(file_path))
+        station = str(meta.get("station") or "MAIN").upper()
+        if station != "MAIN":
+            continue
         try:
             parsed = read_tabular_file(str(file_path))
         except (ValueError, Exception):
             continue
         columns = parsed["columns"]
         if not columns:
+            continue
+        schema = detect_dataset_schema(columns)
+        if schema == INSTITUTE_FOUR_SECTION_SCHEMA:
             continue
         rpm_field = _schema_input_field(0, "rpm")
         wcor_field = _schema_input_field(1, "wcor")
@@ -363,12 +462,9 @@ def load_predict_samples(input_dir: str, radial_mode: str) -> list[FlexSample]:
                 _match_column(columns, rpm_field),
                 _match_column(columns, wcor_field),
                 _match_column(columns, xi_field),
-                _match_column(columns, "component"),
-                _match_column(columns, "stage"),
-                _match_column(columns, "database"),
             )
             if col is not None
-        }
+        } | _metadata_columns(columns)
         output_cols = _resolve_target_columns(columns, used_columns)
         for row in rows_for_mode(parsed["rows"], xi_col, radial_mode):
             component_value = _resolve_logical_value("component", row, meta, columns)
@@ -385,7 +481,6 @@ def load_predict_samples(input_dir: str, radial_mode: str) -> list[FlexSample]:
             if not component or stage is None or rpm is None or wcor is None or xi is None:
                 continue
             outputs = _extract_valid_outputs(row, output_cols) if output_cols else {}
-            station = str(meta.get("station") or "MAIN").upper()
             samples.append(
                 FlexSample(
                     component=component,
@@ -398,6 +493,8 @@ def load_predict_samples(input_dir: str, radial_mode: str) -> list[FlexSample]:
                     xi=xi,
                     source_path=str(file_path),
                     outputs=outputs,
+                    section=None,
+                    schema=schema,
                 )
             )
     return samples
