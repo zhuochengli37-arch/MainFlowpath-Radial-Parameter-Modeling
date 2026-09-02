@@ -1,0 +1,27 @@
+这里专门保存软件测试使用的算例与对应输出结果。
+
+当前目录按两类工作流划分：
+
+1. current
+   - current/1d/sample6
+   - current/3d/DATACASE1
+   - current/3d/DATACASEVAR_21
+
+2. generic
+   - generic/1d
+   - generic/2d
+   - generic/3d
+
+当前每套测试算例目录下统一包含：
+
+- `train`
+- `predict`
+- `output`
+- `results`
+
+说明：
+
+- 这里同时保留测试输入数据和测试后形成的输出结果，便于复核测试报告。
+- `output` 中通常包含模型、排行榜、报告、配置快照等训练产物。
+- `results` 中通常包含预测输出结果。
+- 如果后续要新增测试算例，建议继续按 current / generic 分类补充。

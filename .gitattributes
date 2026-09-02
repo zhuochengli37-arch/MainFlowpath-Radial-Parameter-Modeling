@@ -1,0 +1,32 @@
+# Keep source and configuration files stable across Windows/Linux checkouts.
+/.gitattributes text eol=lf
+/.gitignore text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.csv text eol=lf
+*.txt text eol=lf
+*.dat text eol=lf
+*.example text eol=lf
+
+# Native Windows scripts are distributed with CRLF line endings.
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binary artifacts must never undergo line-ending conversion.
+*.docx binary
+*.xlsx binary
+*.xls binary
+*.pkl binary
+*.pickle binary
+*.joblib binary
+*.whl binary
+*.exe binary
+*.dll binary
+*.pyd binary
+*.zip binary

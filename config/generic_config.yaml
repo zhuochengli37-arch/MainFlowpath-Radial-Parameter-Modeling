@@ -1,0 +1,52 @@
+﻿# AIR2 Project1 通用表格配置
+# 这套配置服务于 `workbase/generic_scripts` 下的通用 1D / 2D / 3D 训练与预测入口。
+#
+# 通用规则：
+# - 输入文件必须包含表头
+# - 前 N 列自动作为输入列
+# - 剩余列自动作为输出列
+
+generic_benchmark_1d:
+  paths:
+    input: "./data/generic/1d/train"
+    output: "./data/generic/1d/output"
+  n_splits: 5
+  max_samples: null
+  include_gpr: false
+
+generic_benchmark_2d:
+  paths:
+    input: "./data/generic/2d/train"
+    output: "./data/generic/2d/output"
+  n_splits: 5
+  max_samples: null
+  include_gpr: false
+
+generic_benchmark_3d:
+  paths:
+    input: "./data/generic/3d/train"
+    output: "./data/generic/3d/output"
+  n_splits: 5
+  max_samples: null
+  include_gpr: false
+
+generic_predict_1d:
+  paths:
+    input: "./data/generic/1d/predict"
+    model_output: "./data/generic/1d/output"
+    output: "./data/generic/1d/results"
+
+generic_predict_2d:
+  paths:
+    input: "./data/generic/2d/predict"
+    model_output: "./data/generic/2d/output"
+    output: "./data/generic/2d/results"
+
+generic_predict_3d:
+  paths:
+    input: "./data/generic/3d/predict"
+    model_output: "./data/generic/3d/output"
+    output: "./data/generic/3d/results"
+
+advanced:
+  log_dir: "./logs"

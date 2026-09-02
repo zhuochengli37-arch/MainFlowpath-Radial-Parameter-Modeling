@@ -1,0 +1,107 @@
+# Python bytecode and interpreter caches
+__pycache__/
+*.py[cod]
+*.pyd
+*$py.class
+
+# Virtual environments and local interpreter bindings
+.venv/
+venv/
+env/
+ENV/
+.project_venv_python
+
+# Test, type-checker, linter, and coverage caches
+.pytest_cache/
+pytest-cache-files-*/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Build and packaging output
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# IDE, agent-local, and operating-system state
+.idea/
+.vscode/
+.codex/
+.agents/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs and runtime diagnostics
+logs/
+*.log
+*.log.*
+
+# Temporary files and scratch output
+tmp/
+temp/
+.tmp/
+data/tmp*/
+*.tmp
+*.temp
+*.bak
+*.backup_*
+*.swp
+*.swo
+~$*
+
+# Generated model artifacts and reports
+*.pkl
+*.pickle
+*.joblib
+*.onnx
+data/**/output*/
+data/**/results*/
+data/**/models*/
+data/**/run_configs/
+
+# Large local databases are not source-controlled. Keep only the tiny files
+# referenced by the current unit/smoke tests; canonical regression fixtures
+# live in ../../04_TEST_DATA.
+/data/current/**
+!/data/current/1d/
+!/data/current/1d/sample6/
+!/data/current/1d/sample6/train/
+!/data/current/1d/sample6/train/example1.txt
+!/data/current/1d/sample6/predict/
+!/data/current/1d/sample6/predict/example1.txt
+!/data/current/3d/
+!/data/current/3d/CASE1/
+!/data/current/3d/CASE1/train/
+!/data/current/3d/CASE1/train/DATABASE_CMP/
+!/data/current/3d/CASE1/train/DATABASE_CMP/STAGE_1/
+!/data/current/3d/CASE1/train/DATABASE_CMP/STAGE_1/RPM_0.6/
+!/data/current/3d/CASE1/train/DATABASE_CMP/STAGE_1/RPM_0.6/0.00681.txt
+
+/data/generic/**
+!/data/generic/1d/
+!/data/generic/1d/train/
+!/data/generic/1d/train/test1_1d.TXT
+!/data/generic/1d/predict/
+!/data/generic/1d/predict/test1_1d.TXT
+!/data/generic/2d/
+!/data/generic/2d/train/
+!/data/generic/2d/train/example.csv
+!/data/generic/2d/predict/
+!/data/generic/2d/predict/example.csv
+!/data/generic/3d/
+!/data/generic/3d/train/
+!/data/generic/3d/train/example.csv
+!/data/generic/3d/predict/
+!/data/generic/3d/predict/example.csv
+
+# Offline binary bundles are release/deployment inputs, not source history.
+offline_packages/
+offline_installers/

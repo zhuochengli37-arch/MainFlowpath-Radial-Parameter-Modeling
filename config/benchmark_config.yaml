@@ -1,0 +1,197 @@
+﻿# AIR2 Project1 领域专用配置
+# 建议直接使用：
+# - python -m project1 current benchmark-1d / benchmark-2d / benchmark-3d
+# - python -m project1 current predict-1d / predict-2d / predict-3d
+# - python workbase/current_scripts/workline_pipeline.py
+# 当前推荐统一入口；如需一键串联可用 workline_pipeline.py
+
+# ============================================
+# 数据集 Schema
+# ============================================
+dataset_schema:
+  mode: "auto"
+
+  # 1D / 2D / 3D 工作流统一按这个输入顺序解释字段
+  inputs: ["rpm", "wcor", "xi"]
+  targets: ["Cpt", "Ctt", "Cps", "Cts", "MA", "VX", "RHO"]
+  metadata: ["component", "stage", "database"]
+
+  # path 表示优先从目录结构或文件名解析
+  # column 表示从数据列中读取
+  source_priority:
+    component: ["path", "column"]
+    stage: ["path", "column"]
+    database: ["path", "column"]
+    rpm: ["path", "column"]
+    wcor: ["path", "column"]
+    xi: ["column"]
+
+  aliases:
+    rpm: ["rpm", "RPM", "CNC", "cnc", "CNF", "cnf"]
+    wcor: ["wcor", "WCOR", "W", "w"]
+    xi: ["xi"]
+    Cpt: ["Cpt", "cpt"]
+    Ctt: ["Ctt", "ctt"]
+    Cps: ["Cps", "cps"]
+    Cts: ["Cts", "cts"]
+    MA: ["MA", "ma"]
+    VX: ["VX", "vx"]
+    RHO: ["RHO", "rho"]
+
+  # 目标值中的 -999.0 视为缺失值
+  missing_value_sentinels: [-999.0]
+
+  partition:
+    mode: "config"
+    keys: ["component", "stage"]
+
+# ============================================
+# 3D Benchmark
+# ============================================
+benchmark_3d:
+  paths:
+    # 训练数据目录
+    input: "./data/current/3d/CASE3/train"
+    output: "./data/current/3d/CASE3/output"
+    # 模型、排行榜、报告等输出目录
+
+  radial_mode: "full"  # mean: 只取 xi 最小和最大两行；full: 使用全部径向行
+  partition_mode: "multi"
+  n_splits: 3
+  max_samples: 10000
+  include_gpr: true
+
+  # 分区模式说明：
+  # - multi: 按部件 + 级数分区，当前默认推荐
+  # - component: 按部件分区，同一部件下多个级合并训练
+  # - single: 所有样本混合训练，最省样本
+  # - family: 按部件家族分区，适合相近物理类别共享样本
+
+# ============================================
+# 2D Benchmark
+# ============================================
+benchmark_2d:
+  paths:
+    input: "./data/current/3d/CASE2-2/train"
+    output: "./data/current/3d/CASE2-2/output_2d"
+
+  radial_mode: "full"
+  partition_mode: "multi"
+  n_splits: 3
+  max_samples: 10000
+  include_gpr: false
+
+# ============================================
+# 1D Benchmark
+# ============================================
+benchmark_1d:
+  paths:
+    input: "./data/current/3d/CASE2-2/train"
+    output: "./data/current/3d/CASE2-2/output_1d"
+
+  n_splits: 5
+  max_samples: 10000
+  include_gpr: false
+
+# ============================================
+# 3D Predict
+# ============================================
+predict_3d:
+  paths:
+    input: "./data/current/3d/CASE3/predict"
+    model_output: "./data/current/3d/CASE3/output"
+    output: "./data/current/3d/CASE3/results"
+
+  partition: null
+  model_name: null
+  selection_split_mode: "random"  # 可选：random / rpm / wcor / any
+  selection_metric: "rmse"        # 可选：rmse / mape / mae
+  save_results: true
+  result_format: "both"
+  generate_report: true
+
+# ============================================
+# 2D Predict
+# ============================================
+predict_2d:
+  paths:
+    input: "./data/current/3d/CASE2-2/predict"
+    model_output: "./data/current/3d/CASE2-2/output_2d"
+    output: "./data/current/3d/CASE2-2/results_2d"
+
+  partition: null
+  save_results: true
+  result_format: "both"
+  generate_report: true
+
+# ============================================
+# 1D Predict
+# ============================================
+predict_1d:
+  paths:
+    input: "./data/current/3d/CASE2-3/predict"
+    model_output: "./data/current/3d/CASE2-2/output_1d"
+    output: "./data/current/3d/CASE2-3/results_1d"
+
+  save_results: true
+  result_format: "both"
+  generate_report: true
+
+# ============================================
+# 运行时模型参考
+# ============================================
+# 注意：
+# 1. 这份列表用于说明当前运行时已注册的模型名称；
+# 2. 具体工作流会按维度自动选择可用子集；
+# 3. GPR 模型是否参与训练，仍受各段落中的 include_gpr 开关控制；
+# 4. 该列表不作为“只跑这些模型”的强约束开关。
+models:
+  - linear_deg2
+  - ridge_deg2
+  - spline_regression
+  - knn_distance
+  - random_forest
+  - gradient_boosting
+  - xgboost
+  - lightgbm
+  - lasso
+  - elastic_net
+  - svr_rbf
+  - poly2
+  - poly3
+  - gpr_rbf
+  - gpr_matern
+  - piecewise_ridge
+  - tensor_spline
+  - lowess_like
+  - rbf
+  - hierarchical_workline
+  - endpoint_hub_tip
+  - physics_clamped_ridge
+
+# ============================================
+# 高级配置
+# ============================================
+advanced:
+  random_state: 42
+  n_jobs: -1
+  verbose: true
+  log_dir: "./logs"
+
+# ============================================
+# 性能配置
+# ============================================
+performance:
+  early_stopping: false
+  early_stopping_rounds: 10
+  use_gpu: false
+  memory_limit: null
+
+# ============================================
+# 输出配置
+# ============================================
+output:
+  save_models: true
+  generate_leaderboard: true
+  generate_report: true
+  report_format: "markdown"

@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=65.5", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "project1"
+version = "0.1.0"
+description = "Offline Python project scaffold"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+  { name = "Your Name" }
+]
+dependencies = [
+  "python-dotenv>=1.0.0",
+  "pyyaml>=6.0.0",
+  "tqdm>=4.66.0",
+  "numpy>=1.24.0",
+  "scipy>=1.10.0",
+  "scikit-learn>=1.3.0",
+  "xgboost==3.2.0",
+  "lightgbm==4.6.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "workbase/src"}
+
+[tool.setuptools.packages.find]
+where = ["workbase/src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["workbase/src"]
+testpaths = ["tests"]
+addopts = "-q"
+
+[project.scripts]
+project1 = "project1.cli:main"
