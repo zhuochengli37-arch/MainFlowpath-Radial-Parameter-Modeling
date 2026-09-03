@@ -46,12 +46,18 @@ def test_institute_main_component_is_read_from_formal_fixture(
     assert sample.station == "MAIN"
     assert sample.section is None
     assert sample.schema == INSTITUTE_SINGLE_SECTION_SCHEMA
+    assert sample.schema_name == INSTITUTE_SINGLE_SECTION_SCHEMA
+    assert sample.schema_version == "v1"
     assert sample.speed_parameter == pytest.approx(speed_parameter)
     assert sample.flow_parameter == pytest.approx(flow_parameter)
+    assert sample.speed_parameter_name == "CNC"
+    assert sample.flow_parameter_name == source.stem.rsplit("_", 1)[0]
     assert sample.rpm == pytest.approx(speed_parameter)
     assert sample.wcor == pytest.approx(flow_parameter)
     assert sample.xi == pytest.approx(0.0)
     assert set(sample.output_columns) == FORMAL_TARGETS
+    assert sample.source_fields["xi"] == "xi"
+    assert sample.source_fields["Cpt"] == "Cpt"
     assert sample.get_output("Cpt") == pytest.approx(first_cpt)
 
 

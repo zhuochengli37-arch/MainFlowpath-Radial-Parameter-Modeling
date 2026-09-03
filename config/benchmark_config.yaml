@@ -26,7 +26,12 @@ dataset_schema:
       fields: ["xi", "Cpt", "Ctt", "Cps", "Cts", "MA"]
     institute_four_section:
       description: "研究所 RI/RO/SI/SO 四截面数据；Adapter可读取拆分，但不进入模型训练或预测"
+      version: "v1"
       sections: ["RI", "RO", "SI", "SO"]
+      compatibility_of: "institute_multi_section"
+    institute_multi_section:
+      description: "通用M截面宽表；从xi_<section>动态发现截面与实际outputs，仅到canonical数据层"
+      version: "v1"
 
   # path 表示优先从目录结构或文件名解析
   # column 表示从数据列中读取

@@ -98,6 +98,25 @@ def _wcor_from_stem(stem: str) -> float | None:
     return _to_float(stem)
 
 
+def _speed_parameter_name(parts: tuple[str, ...]) -> str | None:
+    for part in parts:
+        upper = part.upper()
+        for prefix in ("RPM_", "CNC_", "CNF_"):
+            if upper.startswith(prefix):
+                return part[: len(prefix) - 1]
+    return None
+
+
+def _flow_parameter_name(stem: str) -> str | None:
+    match = re.match(r"(W\d*COR)[_-]", stem, flags=re.IGNORECASE)
+    if match:
+        return match.group(1)
+    for prefix in ("PHI_", "WCOR_"):
+        if stem.upper().startswith(prefix):
+            return stem[: len(prefix) - 1]
+    return None
+
+
 def parse_metadata_from_path(file_path: str) -> dict[str, object | None]:
     p = Path(file_path)
     component: str | None = None
@@ -132,6 +151,8 @@ def parse_metadata_from_path(file_path: str) -> dict[str, object | None]:
 
     stem = p.stem
     wcor = _wcor_from_stem(stem)
+    speed_parameter_name = _speed_parameter_name(p.parts)
+    flow_parameter_name = _flow_parameter_name(stem)
 
     # Fallback for "component-stage-rpm-wcor.txt/dat".
     if component is None or stage is None or rpm is None or wcor is None:
@@ -172,6 +193,8 @@ def parse_metadata_from_path(file_path: str) -> dict[str, object | None]:
         "stage": stage,
         "speed_parameter": rpm,
         "flow_parameter": wcor,
+        "speed_parameter_name": speed_parameter_name,
+        "flow_parameter_name": flow_parameter_name,
         "schema": None,
         "source_file": str(p),
         # Backward-compatible names used by the existing proxy-model code.

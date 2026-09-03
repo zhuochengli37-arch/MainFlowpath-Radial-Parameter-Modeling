@@ -35,7 +35,8 @@ Project1/
 
 研究所正式数据与Legacy验证数据的边界见 `docs/研究所数据Schema说明.md`。当前正式
 单截面模型只加载 `station=MAIN`；INLET/OUTLET可识别但不训练。四截面可由独立
-Adapter识别并拆分为canonical数据，但仍不会进入现有1D/2D/3D训练或预测入口。
+Adapter识别并拆分为canonical数据；底层采用动态Multi-Section解析，但仍不会进入现有
+1D/2D/3D训练或预测入口。
 
 训练数据通常位于 `data/current/3d/<dataset>/train/`。  
 预测数据通常位于 `data/current/3d/<dataset>/predict/`。

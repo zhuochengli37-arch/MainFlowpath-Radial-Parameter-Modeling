@@ -2,9 +2,9 @@
 
 ## 阶段边界
 
-本阶段只完成 Institute Four-Section DATABASE 的识别、解析、四截面拆分和
-canonical 内部表示。独立 Adapter 的输出不会自动进入现有 1D/2D/3D 训练或预测；
-本阶段也不包含四截面代理模型或 AI 模型。
+Institute Four-Section DATABASE 通过通用 Multi-Section 核心完成识别、解析、拆分和
+canonical内部表示。Four-Section模块只保留当前正式库兼容入口与展示顺序。Adapter的
+输出不会自动进入现有1D/2D/3D训练或预测，本阶段也不包含代理模型或AI模型。
 
 ## 权威样例核验
 
@@ -54,13 +54,15 @@ xi Cpt Cps Ctt Cts Ma
 
 - 标识：`institute_four_section`
 - MAIN 宽表中的字段由 `_RI`、`_RO`、`_SI`、`_SO` 后缀明确归属。
-- 四组 section 必须全部存在；每组必须有自己的 `xi` 和输出字段。
+- 当前 Four-Section兼容入口验证RI/RO/SI/SO四组完整性；通用核心不限制数量和名称。
+- 每组必须有自己的 `xi` 和至少一个实际输出字段。
 - 分组不依赖固定列号，因此压缩部件和涡轮源文件的列组顺序可以不同。
+- 通用设计详见 `docs/研究所多截面数据框架说明.md`。
 
 ## station 与 section
 
 `station` 表示数据库文件在部件边界上的语义，只允许 `MAIN`、`INLET`、`OUTLET`。
-`section` 表示 MAIN 级内气动截面，只允许 `RI`、`RO`、`SI`、`SO`。
+`section` 表示MAIN级内气动截面。当前正式库使用RI/RO/SI/SO，通用核心允许其他合法名称。
 
 ```text
 component=CMP, stage=1, station=MAIN, section=RO
@@ -93,6 +95,11 @@ schema
 source_file
 outputs
 source_fields
+schema_name
+schema_version
+speed_parameter_name
+flow_parameter_name
+units
 ```
 
 `source_fields` 保存 canonical 字段到原字段名的映射。例如涡轮 `Ma_SI` 明确映射为

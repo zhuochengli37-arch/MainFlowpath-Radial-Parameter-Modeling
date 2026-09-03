@@ -25,6 +25,15 @@
 - 当前 1D/2D/3D 训练和预测入口仍不准入该 Schema。
 - 完整规则和正式样例核验见 `docs/研究所四截面数据Adapter说明.md`。
 
+### Institute Multi-Section Schema
+
+- 标识：`institute_multi_section`
+- 版本：`v1`
+- 从 `xi_<section>` 动态发现一个或多个section，不限定section数量或名称。
+- `institute_four_section` 继续作为当前研究所RI/RO/SI/SO数据的兼容标识，其canonical
+  Schema身份是 `institute_multi_section / v1`。
+- 每个section独立保留自己的xi、动态outputs和原字段映射。
+
 ## 统一内部 metadata
 
 ```text
@@ -37,15 +46,23 @@ flow_parameter
 xi
 schema
 source_file
+schema_name
+schema_version
+speed_parameter_name
+flow_parameter_name
+outputs
+source_fields
+units
 ```
 
-Four-Section Adapter 另提供当前 section 实际存在的 `outputs` 和原字段追踪
-`source_fields`。`rpm`、`wcor` 和 `source_path` 继续作为兼容别名。
+`rpm`、`wcor` 和 `source_path` 继续作为兼容别名。单位只有在数据源或调用方明确提供时
+才记录，不根据变量名称猜测。
 
 ## station 与 section
 
 - `station`：`MAIN`、`INLET`、`OUTLET`。
-- `section`：MAIN 级内的 `RI`、`RO`、`SI`、`SO`。
+- `section`：MAIN级内由header发现的截面名称；RI/RO/SI/SO是当前正式库实例，不是
+  通用核心允许的固定全集。
 - Single-Section 和 INLET/OUTLET 的 `section=None`。
 - 准入判断使用 station，不以 stage=0/999 代替 station 语义。
 

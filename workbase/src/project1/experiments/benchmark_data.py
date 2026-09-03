@@ -8,10 +8,10 @@ import numpy as np
 
 from project1.services.data_reader import read_curve_file, read_tabular_file
 from project1.services.dataset_schema import (
-    INSTITUTE_FOUR_SECTION_SCHEMA,
     LEGACY_VALIDATION_SCHEMA,
     detect_dataset_schema,
     is_current_proxy_schema,
+    schema_identity,
 )
 from project1.services.meta_parser import parse_metadata_from_path
 from workbase.common.config_loader import load_config
@@ -71,8 +71,13 @@ class FlexSample:
         "flow_parameter",
         "xi",
         "schema",
+        "schema_name",
+        "schema_version",
         "source_file",
         "source_fields",
+        "speed_parameter_name",
+        "flow_parameter_name",
+        "units",
         "_outputs",
     )
 
@@ -91,6 +96,11 @@ class FlexSample:
         section: str | None = None,
         schema: str = LEGACY_VALIDATION_SCHEMA,
         source_fields: dict[str, str] | None = None,
+        schema_name: str | None = None,
+        schema_version: str | None = None,
+        speed_parameter_name: str | None = None,
+        flow_parameter_name: str | None = None,
+        units: dict[str, str] | None = None,
     ) -> None:
         self.component = component
         self.family = family
@@ -102,8 +112,14 @@ class FlexSample:
         self.flow_parameter = wcor
         self.xi = xi
         self.schema = schema
+        default_schema_name, default_schema_version = schema_identity(schema)
+        self.schema_name = schema_name or default_schema_name
+        self.schema_version = schema_version or default_schema_version
         self.source_file = source_path
         self.source_fields = dict(source_fields or {})
+        self.speed_parameter_name = speed_parameter_name
+        self.flow_parameter_name = flow_parameter_name
+        self.units = dict(units or {})
         self._outputs = outputs
 
     @property
@@ -279,6 +295,7 @@ def inspect_dataset_file(file_path: str | Path) -> dict[str, object]:
     columns = [str(column) for column in parsed["columns"]]
     station = str(meta.get("station") or "MAIN").upper()
     schema = detect_dataset_schema(columns, station=station)
+    schema_name, schema_version = schema_identity(schema)
     return {
         "component": meta.get("component"),
         "stage": meta.get("stage"),
@@ -286,9 +303,14 @@ def inspect_dataset_file(file_path: str | Path) -> dict[str, object]:
         "section": meta.get("section"),
         "speed_parameter": meta.get("speed_parameter"),
         "flow_parameter": meta.get("flow_parameter"),
+        "speed_parameter_name": meta.get("speed_parameter_name"),
+        "flow_parameter_name": meta.get("flow_parameter_name"),
         "xi": None,
         "schema": schema,
+        "schema_name": schema_name,
+        "schema_version": schema_version,
         "source_file": str(path),
+        "units": {},
         "columns": tuple(columns),
         "trainable": station == "MAIN" and is_current_proxy_schema(schema),
     }
@@ -439,6 +461,9 @@ def load_samples(input_dir: str, radial_mode: str) -> list[FlexSample]:
                     outputs=outputs,
                     section=None,
                     schema=schema,
+                    source_fields={"xi": xi_col, **{name: name for name in outputs}},
+                    speed_parameter_name=str(meta["speed_parameter_name"]) if meta.get("speed_parameter_name") else None,
+                    flow_parameter_name=str(meta["flow_parameter_name"]) if meta.get("flow_parameter_name") else None,
                 )
             )
     return samples
@@ -459,7 +484,7 @@ def load_predict_samples(input_dir: str, radial_mode: str) -> list[FlexSample]:
         if not columns:
             continue
         schema = detect_dataset_schema(columns)
-        if schema == INSTITUTE_FOUR_SECTION_SCHEMA:
+        if not is_current_proxy_schema(schema):
             continue
         rpm_field = _schema_input_field(0, "rpm")
         wcor_field = _schema_input_field(1, "wcor")
@@ -504,6 +529,9 @@ def load_predict_samples(input_dir: str, radial_mode: str) -> list[FlexSample]:
                     outputs=outputs,
                     section=None,
                     schema=schema,
+                    source_fields={"xi": xi_col, **{name: name for name in outputs}},
+                    speed_parameter_name=str(meta["speed_parameter_name"]) if meta.get("speed_parameter_name") else None,
+                    flow_parameter_name=str(meta["flow_parameter_name"]) if meta.get("flow_parameter_name") else None,
                 )
             )
     return samples

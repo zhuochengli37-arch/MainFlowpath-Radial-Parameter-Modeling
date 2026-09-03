@@ -28,6 +28,8 @@ class TestParseMetadataFromPath:
         assert metadata["stage"] == 1
         assert metadata["rpm"] == pytest.approx(0.6)
         assert metadata["wcor"] == pytest.approx(0.00681)
+        assert metadata["speed_parameter_name"] == "RPM"
+        assert metadata["flow_parameter_name"] is None
 
     def test_parse_fan_component(self):
         """测试解析 FAN 部件"""
@@ -121,6 +123,8 @@ class TestParseMetadataFromPath:
         assert metadata["stage"] == 0
         assert metadata["rpm"] == pytest.approx(0.78)
         assert metadata["wcor"] == pytest.approx(27.998)
+        assert metadata["speed_parameter_name"] == "CNC"
+        assert metadata["flow_parameter_name"] == "W25COR"
 
     def test_parse_outlet_database_component(self):
         path = Path("DATABASE_FAN_OUTLET/STAGE_999/CNC_1.00/W2COR_13.200.dat")
@@ -132,6 +136,17 @@ class TestParseMetadataFromPath:
         assert metadata["stage"] == 999
         assert metadata["rpm"] == pytest.approx(1.0)
         assert metadata["wcor"] == pytest.approx(13.2)
+        assert metadata["speed_parameter_name"] == "CNC"
+        assert metadata["flow_parameter_name"] == "W2COR"
+
+    def test_preserve_cnf_and_turbine_flow_parameter_names(self):
+        path = Path("DATABASE_HPTB/STAGE_2/CNF_0.71/W4COR_18.2.dat")
+        metadata = parse_metadata_from_path(path)
+
+        assert metadata["speed_parameter"] == pytest.approx(0.71)
+        assert metadata["flow_parameter"] == pytest.approx(18.2)
+        assert metadata["speed_parameter_name"] == "CNF"
+        assert metadata["flow_parameter_name"] == "W4COR"
 
 
 if __name__ == "__main__":
