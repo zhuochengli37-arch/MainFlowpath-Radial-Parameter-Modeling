@@ -14,7 +14,19 @@ dataset_schema:
   # 1D / 2D / 3D 工作流统一按这个输入顺序解释字段
   inputs: ["rpm", "wcor", "xi"]
   targets: ["Cpt", "Ctt", "Cps", "Cts", "MA", "VX", "RHO"]
-  metadata: ["component", "stage", "database"]
+  # Canonical internal metadata. `rpm`/`wcor` remain compatibility aliases in
+  # code; speed_parameter/flow_parameter do not prescribe component units.
+  metadata: ["component", "stage", "station", "section", "speed_parameter", "flow_parameter", "xi", "schema", "source_file", "database"]
+
+  schema_profiles:
+    legacy_validation:
+      description: "旧 psi/tsi/mai 验证数据及历史代理模型输入"
+    institute_single_section:
+      description: "研究所正式单截面数据；当前模型只使用 station=MAIN"
+      fields: ["xi", "Cpt", "Ctt", "Cps", "Cts", "MA"]
+    institute_four_section:
+      description: "研究所 RI/RO/SI/SO 四截面数据；本阶段仅识别，不训练或预测"
+      sections: ["RI", "RO", "SI", "SO"]
 
   # path 表示优先从目录结构或文件名解析
   # column 表示从数据列中读取
@@ -22,6 +34,12 @@ dataset_schema:
     component: ["path", "column"]
     stage: ["path", "column"]
     database: ["path", "column"]
+    station: ["path", "column"]
+    section: ["path", "column"]
+    speed_parameter: ["path", "column"]
+    flow_parameter: ["path", "column"]
+    schema: ["path", "column"]
+    source_file: ["path", "column"]
     rpm: ["path", "column"]
     wcor: ["path", "column"]
     xi: ["column"]
@@ -29,6 +47,8 @@ dataset_schema:
   aliases:
     rpm: ["rpm", "RPM", "CNC", "cnc", "CNF", "cnf"]
     wcor: ["wcor", "WCOR", "W", "w"]
+    speed_parameter: ["speed_parameter", "rpm", "RPM", "CNC", "cnc", "CNF", "cnf"]
+    flow_parameter: ["flow_parameter", "wcor", "WCOR", "W", "w"]
     xi: ["xi"]
     Cpt: ["Cpt", "cpt"]
     Ctt: ["Ctt", "ctt"]

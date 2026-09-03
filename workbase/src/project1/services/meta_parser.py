@@ -166,7 +166,15 @@ def parse_metadata_from_path(file_path: str) -> dict[str, object | None]:
         "component": component,
         "database": database,
         "station": station or "MAIN",
+        # The single-section database does not provide an authoritative
+        # RI/RO/SI/SO meaning, so path parsing must not invent one.
+        "section": None,
         "stage": stage,
+        "speed_parameter": rpm,
+        "flow_parameter": wcor,
+        "schema": None,
+        "source_file": str(p),
+        # Backward-compatible names used by the existing proxy-model code.
         "rpm": rpm,
         "wcor": wcor,
         "phi": wcor,

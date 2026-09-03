@@ -61,6 +61,10 @@ def _extract_partitioned_rpm_wcor_pairs(
     pairs_by_partition: dict[str, dict[float, float]] = defaultdict(dict)
     details_by_partition: dict[str, dict[str, object]] = {}
     for sample in samples:
+        # Current proxy models are defined only for the aerodynamic MAIN
+        # station. This is intentionally station-based, not stage 0/999 based.
+        if str(getattr(sample, "station", "MAIN")).upper() != "MAIN":
+            continue
         partition = _sample_partition_key(sample)
         rpm = float(sample.rpm)
         wcor = float(sample.wcor)
@@ -75,6 +79,9 @@ def _extract_partitioned_rpm_wcor_pairs(
             partition,
             {"component": sample.component, "stage": int(sample.stage)},
         )
+
+    if not pairs_by_partition:
+        raise ValueError("no station=MAIN samples found for 1D training")
 
     result: dict[str, tuple[np.ndarray, np.ndarray, dict[str, object]]] = {}
     for partition, rpm_to_wcor in sorted(pairs_by_partition.items()):

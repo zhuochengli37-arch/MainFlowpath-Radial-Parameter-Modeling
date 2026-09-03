@@ -33,6 +33,9 @@ Project1/
 - `DATACASE3`: 通用 2D 表格格式
 - `DATACASE4`: 通用 3D 表格格式
 
+研究所正式数据与Legacy验证数据的边界见 `docs/研究所数据Schema说明.md`。当前正式
+单截面模型只加载 `station=MAIN`；INLET/OUTLET可识别但不训练，四截面仅识别Schema。
+
 训练数据通常位于 `data/current/3d/<dataset>/train/`。  
 预测数据通常位于 `data/current/3d/<dataset>/predict/`。
 
