@@ -25,8 +25,8 @@ def _section_suffix(column: str) -> str | None:
     return suffix if suffix in INSTITUTE_FOUR_SECTION_NAMES else None
 
 
-def detect_dataset_schema(columns: Iterable[object]) -> str:
-    """Classify a parsed header without interpreting component-specific units."""
+def detect_dataset_schema(columns: Iterable[object], station: str = "MAIN") -> str:
+    """Classify an actual header while keeping station and section semantics separate."""
 
     normalized = [_normalize_column(column) for column in columns]
     section_suffixes = {
@@ -39,12 +39,19 @@ def detect_dataset_schema(columns: Iterable[object]) -> str:
         return INSTITUTE_FOUR_SECTION_SCHEMA
 
     field_set = set(normalized)
-    if INSTITUTE_COMMON_AERO_FIELDS.issubset(field_set) and (
-        {"Vz", "Rho"}.issubset(field_set) or "Ma" in field_set
-    ):
-        return INSTITUTE_FOUR_SECTION_SCHEMA
-
     if INSTITUTE_SINGLE_SECTION_FIELDS.issubset(field_set):
+        return INSTITUTE_SINGLE_SECTION_SCHEMA
+
+    # Four-section DATABASE boundary files use unsuffixed single-section
+    # headers. Their INLET/OUTLET station is path metadata; it must not be
+    # converted into a RI/RO/SI/SO section.
+    normalized_station = str(station).strip().upper()
+    is_boundary = normalized_station in {"INLET", "OUTLET"}
+    is_unsuffixed_institute_header = INSTITUTE_COMMON_AERO_FIELDS.issubset(field_set) and (
+        {"Vz", "Rho"}.issubset(field_set)
+        or bool({"Ma", "MA"}.intersection(field_set))
+    )
+    if is_boundary and is_unsuffixed_institute_header:
         return INSTITUTE_SINGLE_SECTION_SCHEMA
 
     return LEGACY_VALIDATION_SCHEMA

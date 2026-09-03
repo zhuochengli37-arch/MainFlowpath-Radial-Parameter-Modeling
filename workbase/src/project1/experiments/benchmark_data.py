@@ -72,6 +72,7 @@ class FlexSample:
         "xi",
         "schema",
         "source_file",
+        "source_fields",
         "_outputs",
     )
 
@@ -89,6 +90,7 @@ class FlexSample:
         outputs: dict[str, float],
         section: str | None = None,
         schema: str = LEGACY_VALIDATION_SCHEMA,
+        source_fields: dict[str, str] | None = None,
     ) -> None:
         self.component = component
         self.family = family
@@ -101,6 +103,7 @@ class FlexSample:
         self.xi = xi
         self.schema = schema
         self.source_file = source_path
+        self.source_fields = dict(source_fields or {})
         self._outputs = outputs
 
     @property
@@ -127,6 +130,12 @@ class FlexSample:
     @property
     def output_columns(self) -> tuple[str, ...]:
         return tuple(self._outputs.keys())
+
+    @property
+    def outputs(self) -> dict[str, float]:
+        """Return a copy of the physical outputs present in this record."""
+
+        return dict(self._outputs)
 
 
 AnySample = Sample | FlexSample
@@ -268,8 +277,8 @@ def inspect_dataset_file(file_path: str | Path) -> dict[str, object]:
     meta = parse_metadata_from_path(str(path))
     parsed = read_curve_file(str(path))
     columns = [str(column) for column in parsed["columns"]]
-    schema = detect_dataset_schema(columns)
     station = str(meta.get("station") or "MAIN").upper()
+    schema = detect_dataset_schema(columns, station=station)
     return {
         "component": meta.get("component"),
         "stage": meta.get("stage"),

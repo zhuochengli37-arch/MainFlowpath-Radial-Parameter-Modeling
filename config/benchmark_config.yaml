@@ -25,7 +25,7 @@ dataset_schema:
       description: "研究所正式单截面数据；当前模型只使用 station=MAIN"
       fields: ["xi", "Cpt", "Ctt", "Cps", "Cts", "MA"]
     institute_four_section:
-      description: "研究所 RI/RO/SI/SO 四截面数据；本阶段仅识别，不训练或预测"
+      description: "研究所 RI/RO/SI/SO 四截面数据；Adapter可读取拆分，但不进入模型训练或预测"
       sections: ["RI", "RO", "SI", "SO"]
 
   # path 表示优先从目录结构或文件名解析

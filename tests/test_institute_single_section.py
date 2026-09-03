@@ -137,8 +137,9 @@ def test_four_section_header_is_distinct_and_not_loaded_for_current_models(tmp_p
         ["xi", "Cpt", "Cps", "Ctt", "Cts", "Ma"],
     ],
 )
-def test_four_section_boundary_headers_remain_four_section_schema(columns: list[str]):
-    assert detect_dataset_schema(columns) == INSTITUTE_FOUR_SECTION_SCHEMA
+def test_unsuffixed_boundary_headers_remain_single_section_schema(columns: list[str]):
+    assert detect_dataset_schema(columns, station="INLET") == INSTITUTE_SINGLE_SECTION_SCHEMA
+    assert detect_dataset_schema(columns, station="OUTLET") == INSTITUTE_SINGLE_SECTION_SCHEMA
 
 
 def test_legacy_validation_schema_remains_compatible(tmp_path: Path):
