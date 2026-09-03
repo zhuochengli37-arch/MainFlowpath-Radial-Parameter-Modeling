@@ -29,12 +29,12 @@ dataset_schema:
       description: "研究所正式单截面数据；当前模型只使用 station=MAIN"
       fields: ["xi", "Cpt", "Ctt", "Cps", "Cts", "MA"]
     institute_four_section:
-      description: "研究所 RI/RO/SI/SO 四截面数据；Adapter可拆分并进入1D/2D/3D训练，预测暂未接入"
+      description: "研究所 RI/RO/SI/SO 四截面数据；训练及2D/3D canonical预测core已接入，最终宽表输出未接入"
       version: "v1"
       sections: ["RI", "RO", "SI", "SO"]
       compatibility_of: "institute_multi_section"
     institute_multi_section:
-      description: "通用M截面宽表；从xi_<section>动态发现截面与实际outputs，可进入训练，预测暂未接入"
+      description: "通用M截面宽表；动态发现section/outputs，可进入训练及2D/3D canonical预测core"
       version: "v1"
 
   # path 表示优先从目录结构或文件名解析

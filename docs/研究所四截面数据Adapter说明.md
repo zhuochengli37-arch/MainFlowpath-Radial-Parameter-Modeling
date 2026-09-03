@@ -4,8 +4,8 @@
 
 Institute Four-Section DATABASE 通过通用 Multi-Section 核心完成识别、解析、拆分和
 canonical内部表示。Four-Section模块只保留当前正式库兼容入口与展示顺序。Adapter的
-输出已通过显式训练加载器接入现有1D/2D/3D训练核心；Multi-Section预测、结果重组和
-AI模型仍不在当前范围内。
+输出已通过显式训练加载器接入现有1D/2D/3D训练核心，并可进入共享2D/3D Canonical
+预测核心；1D串联workflow、最终宽表结果重组和AI模型仍不在当前范围内。
 
 ## 权威样例核验
 
@@ -117,11 +117,12 @@ Rho，也不强行统一两类部件的输出目标。
 | Legacy Validation | 是 | 不适用 | 是（兼容路径） | 是（兼容路径） |
 | Institute Single MAIN | 是 | 不适用 | 是 | 是 |
 | Institute INLET/OUTLET | 是 | 不适用 | 否 | 否 |
-| Institute Four MAIN | 是 | 是 | 是 | 否 |
+| Institute Four MAIN | 是 | 是 | 是 | Canonical结果（最终宽表未实现） |
 
 1D 工作线仍只按 `component + stage` 分区，section 不参与 1D partition；一个宽表文件只
-贡献一条工况记录。2D/3D训练按 `component + stage + section` 分区。预测加载器仍拒绝
-`institute_four_section`，避免训练准入被误解为预测链路已完成。
+贡献一条工况记录。2D/3D训练与预测按 `component + stage + section` 分区。共享预测
+loader/core支持该Schema；当前wrapper只提供Canonical JSON调试输出，不将其描述为
+最终研究所Four-Section宽表。
 
 ## 完整正式库 Adapter 审计
 

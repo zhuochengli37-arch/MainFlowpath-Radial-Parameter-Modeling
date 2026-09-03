@@ -70,3 +70,16 @@ def safe_partition_name(partition: str | ModelPartition) -> str:
     """Encode a logical partition using the established model-folder rule."""
 
     return str(partition).replace(" ", "_").replace(":", "_")
+
+
+def parse_partition_key(value: str) -> ModelPartition:
+    """Parse the stable ``COMP:Sstage[:section]`` serialization."""
+
+    parts = str(value).split(":", 2)
+    if len(parts) < 2 or not parts[1].upper().startswith("S"):
+        raise ValueError(f"invalid model partition: {value!r}")
+    return ModelPartition(
+        component=parts[0],
+        stage=int(parts[1][1:]),
+        section=parts[2] if len(parts) == 3 else None,
+    )
