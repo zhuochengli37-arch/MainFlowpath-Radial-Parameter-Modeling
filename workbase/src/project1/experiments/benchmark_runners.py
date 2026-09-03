@@ -6,7 +6,13 @@ from pathlib import Path
 import numpy as np
 from tqdm import tqdm
 
-from project1.experiments.benchmark_data import all_targets, load_samples, schema_input_type
+from project1.experiments.benchmark_data import (
+    PartitionTargetPlan,
+    SCHEMA_CONFIG,
+    load_training_samples,
+    resolve_partition_targets,
+    schema_input_type,
+)
 from project1.experiments.benchmark_partitioning import (
     cv_splits,
     metrics,
@@ -21,6 +27,8 @@ from project1.experiments.benchmark_reporting import (
     write_partition_leaderboards,
     write_utf8_bom_text,
 )
+from project1.experiments.model_partitioning import safe_partition_name
+from project1.experiments.training_metadata import artifact_identity, build_training_context
 from project1.modeling.custom_models import MODEL_CATEGORY
 from project1.modeling.factory import build_3d_models
 from workbase.common.model_versioning import create_model_metadata, save_model_with_metadata
@@ -28,6 +36,75 @@ from workbase.common.model_versioning import create_model_metadata, save_model_w
 
 def _build_models(include_gpr: bool = True) -> dict[str, object]:
     return build_3d_models(include_gpr=include_gpr)
+
+
+def _resolve_target_plans(
+    partitions: list[tuple[str, list[object]]],
+    target_selection: str | list[str] | None = None,
+    missing_target_policy: str | None = None,
+) -> tuple[dict[str, PartitionTargetPlan], tuple[str, ...]]:
+    plans: dict[str, PartitionTargetPlan] = {}
+    ordered_targets: list[str] = []
+    for partition_key, subset in partitions:
+        try:
+            plan = resolve_partition_targets(
+                subset,
+                targets=(
+                    SCHEMA_CONFIG.schema_target_selection
+                    if target_selection is None
+                    else target_selection
+                ),
+                missing_target_policy=(
+                    SCHEMA_CONFIG.missing_target_policy
+                    if missing_target_policy is None
+                    else missing_target_policy
+                ),
+            )
+        except ValueError as exc:
+            raise ValueError(f"partition {partition_key!r}: {exc}") from exc
+        plans[partition_key] = plan
+        for target in plan.selected_targets:
+            if target not in ordered_targets:
+                ordered_targets.append(target)
+    return plans, tuple(ordered_targets)
+
+
+def _write_target_plan(
+    output: Path,
+    model_dimension: str,
+    partition_list: list[tuple[str, list[object]]],
+    target_plans: dict[str, PartitionTargetPlan],
+) -> Path:
+    rows = []
+    for partition_key, subset in partition_list:
+        plan = target_plans[partition_key]
+        first = subset[0]
+        rows.append(
+            {
+                "model_dimension": model_dimension,
+                "component": first.component,
+                "stage": int(first.stage),
+                "station": str(getattr(first, "station", "MAIN")).upper(),
+                "section": getattr(first, "section", None),
+                "partition": partition_key,
+                "sample_count": len(subset),
+                "available_outputs": list(plan.available_outputs),
+                "selected_targets": list(plan.selected_targets),
+                "skipped_targets": plan.skipped_targets,
+                "usable_samples_by_target": {
+                    target: sum(target in sample.output_columns for sample in subset)
+                    for target in plan.selected_targets
+                },
+                "training_skips": {
+                    target: "fewer than 2 valid samples after missing-value filtering"
+                    for target in plan.selected_targets
+                    if sum(target in sample.output_columns for sample in subset) < 2
+                },
+            }
+        )
+    path = output / f"training_target_plan_{model_dimension.lower()}.json"
+    path.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
+    return path
 
 
 def run_benchmark(
@@ -44,17 +121,14 @@ def run_benchmark(
     print("=" * 70)
 
     print("\n[1/7] Loading data...")
-    samples = load_samples(input_dir, radial_mode)
+    samples = load_training_samples(input_dir, radial_mode)
     if len(samples) < 8:
         raise ValueError("not enough usable samples for benchmark")
     if len(samples) > max_samples:
         rng = np.random.default_rng(42)
         idx = rng.choice(np.arange(len(samples)), size=max_samples, replace=False)
         samples = [samples[i] for i in sorted(idx)]
-    targets = all_targets(samples)
-    if not targets:
-        raise ValueError("no usable output targets found after filtering missing values")
-    print(f"Loaded {len(samples)} samples, targets: {list(targets)}")
+    print(f"Loaded {len(samples)} samples")
 
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
@@ -69,11 +143,16 @@ def run_benchmark(
     print("\n[3/7] Partitioning data...")
     partitions = partition_samples(samples, partition_mode)
     partition_list = [(key, subset) for key, subset in partitions.items() if len(subset) >= 8]
+    target_plans, targets = _resolve_target_plans(partition_list)
+    if not targets:
+        raise ValueError("no usable output targets found after partition target resolution")
     print(f"Valid partitions: {len(partition_list)}")
+    print(f"Selected targets across partitions: {list(targets)}")
+    target_plan_path = _write_target_plan(output, "3D", partition_list, target_plans)
 
     total_work = 0
-    for _, subset in partition_list:
-        for target in targets:
+    for partition_key, subset in partition_list:
+        for target in target_plans[partition_key].selected_targets:
             _, _, target_samples = to_arrays(subset, target)
             if len(target_samples) < 3:
                 continue
@@ -86,7 +165,7 @@ def run_benchmark(
     completed_work = 0
     with tqdm(total=total_work, desc="models", unit="model") as pbar:
         for partition_key, subset in partition_list:
-            for target in targets:
+            for target in target_plans[partition_key].selected_targets:
                 x, y, target_samples = to_arrays(subset, target)
                 if len(target_samples) < 3:
                     continue
@@ -115,13 +194,26 @@ def run_benchmark(
                         if not fold_metrics:
                             continue
                         completed_work += 1
+                        context = build_training_context(
+                            target_samples,
+                            model_dimension="3D",
+                            partition=partition_key,
+                            inputs=["speed_parameter", "flow_parameter", "xi"],
+                            target=target,
+                            training_source_root=input_dir,
+                            sample_count=len(target_samples),
+                        )
                         rows.append(
                             {
+                                **artifact_identity(context),
                                 "partition": partition_key,
                                 "partition_size": len(target_samples),
                                 "target": target,
                                 "split_mode": split_mode,
                                 "model": name,
+                                "path": f"models/{safe_partition_name(partition_key)}/{name}_{target}.pkl",
+                                "schema_name": context.get("schema_name"),
+                                "schema_version": context.get("schema_version"),
                                 "model_category": MODEL_CATEGORY.get(name, "other"),
                                 "folds": len(fold_metrics),
                                 "mae": float(np.mean([item["mae"] for item in fold_metrics])),
@@ -138,11 +230,11 @@ def run_benchmark(
 
     saved_models_info: list[dict[str, object]] = []
     for partition_key, subset in partition_list:
-        safe_partition = str(partition_key).replace(" ", "_").replace(":", "_")
+        safe_partition = safe_partition_name(partition_key)
         partition_models_dir = models_dir / safe_partition
         partition_models_dir.mkdir(parents=True, exist_ok=True)
 
-        for target in targets:
+        for target in target_plans[partition_key].selected_targets:
             x, y, target_samples = to_arrays(subset, target)
             if len(target_samples) < 2:
                 continue
@@ -171,6 +263,17 @@ def run_benchmark(
                         if best_result
                         else None
                     )
+                    model_context = build_training_context(
+                        target_samples,
+                        model_dimension="3D",
+                        partition=partition_key,
+                        inputs=["speed_parameter", "flow_parameter", "xi"],
+                        target=target,
+                        training_source_root=input_dir,
+                        sample_count=len(target_samples),
+                    )
+                    model_context["available_outputs"] = list(target_plans[partition_key].available_outputs)
+                    model_context["selected_targets"] = list(target_plans[partition_key].selected_targets)
                     metadata = create_model_metadata(
                         model_name=name,
                         model_type="3D",
@@ -190,16 +293,18 @@ def run_benchmark(
                             "component": subset[0].component if subset else None,
                             "model_category": MODEL_CATEGORY.get(name, "other"),
                         },
+                        model_context=model_context,
                     )
                     model_path = partition_models_dir / f"{name}_{target}.pkl"
                     save_model_with_metadata(final_model, model_path, metadata)
                     saved_models_info.append(
                         {
-                            "partition": partition_key,
-                            "target": target,
+                            **artifact_identity(model_context),
                             "model": name,
                             "path": str(model_path.relative_to(output)),
                             "train_samples": len(target_samples),
+                            "sample_count": len(target_samples),
+                            "metrics": metrics_payload,
                         }
                     )
                 except Exception:
@@ -257,6 +362,7 @@ def run_benchmark(
         "report_path": str(report_path),
         "models_dir": str(models_dir),
         "models_manifest_path": str(models_manifest_path),
+        "target_plan_path": str(target_plan_path),
         "completed_work": completed_work,
     }
 
@@ -275,17 +381,14 @@ def run_benchmark_2d(
     print("=" * 70)
 
     print("\n[1/7] Loading data...")
-    samples = load_samples(input_dir, radial_mode)
+    samples = load_training_samples(input_dir, radial_mode)
     if len(samples) < 8:
         raise ValueError("not enough usable samples for 2D benchmark")
     if len(samples) > max_samples:
         rng = np.random.default_rng(42)
         idx = rng.choice(np.arange(len(samples)), size=max_samples, replace=False)
         samples = [samples[i] for i in sorted(idx)]
-    targets = all_targets(samples)
-    if not targets:
-        raise ValueError("no usable output targets found after filtering")
-    print(f"Loaded {len(samples)} samples, targets: {list(targets)}")
+    print(f"Loaded {len(samples)} samples")
 
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
@@ -300,11 +403,16 @@ def run_benchmark_2d(
     print("\n[3/7] Partitioning data...")
     partitions = partition_samples(samples, partition_mode)
     partition_list = [(key, subset) for key, subset in partitions.items() if len(subset) >= 8]
+    target_plans, targets = _resolve_target_plans(partition_list)
+    if not targets:
+        raise ValueError("no usable output targets found after partition target resolution")
     print(f"Valid partitions: {len(partition_list)}")
+    print(f"Selected targets across partitions: {list(targets)}")
+    target_plan_path = _write_target_plan(output, "2D", partition_list, target_plans)
 
     total_work = 0
-    for _, subset in partition_list:
-        for target in targets:
+    for partition_key, subset in partition_list:
+        for target in target_plans[partition_key].selected_targets:
             _, _, target_samples = to_arrays_2d(subset, target)
             if len(target_samples) < 3:
                 continue
@@ -316,7 +424,7 @@ def run_benchmark_2d(
     print(f"Estimated tasks: {total_work}")
     with tqdm(total=total_work, desc="models", unit="model") as pbar:
         for partition_key, subset in partition_list:
-            for target in targets:
+            for target in target_plans[partition_key].selected_targets:
                 x, y, target_samples = to_arrays_2d(subset, target)
                 if len(target_samples) < 3:
                     continue
@@ -344,13 +452,26 @@ def run_benchmark_2d(
                             fold_metrics.append(metrics(y_test, pred))
                         if not fold_metrics:
                             continue
+                        context = build_training_context(
+                            target_samples,
+                            model_dimension="2D",
+                            partition=partition_key,
+                            inputs=["speed_parameter", "xi"],
+                            target=target,
+                            training_source_root=input_dir,
+                            sample_count=len(target_samples),
+                        )
                         rows.append(
                             {
+                                **artifact_identity(context),
                                 "partition": partition_key,
                                 "partition_size": len(target_samples),
                                 "target": target,
                                 "split_mode": split_mode,
                                 "model": name,
+                                "path": f"models_2d/{safe_partition_name(partition_key)}/{name}_{target}.pkl",
+                                "schema_name": context.get("schema_name"),
+                                "schema_version": context.get("schema_version"),
                                 "model_category": MODEL_CATEGORY.get(name, "other"),
                                 "folds": len(fold_metrics),
                                 "mae": float(np.mean([item["mae"] for item in fold_metrics])),
@@ -371,10 +492,10 @@ def run_benchmark_2d(
     saved_models = 0
     saved_models_info: list[dict[str, object]] = []
     for partition_key, subset in partition_list:
-        safe_partition = str(partition_key).replace(" ", "_").replace(":", "_")
+        safe_partition = safe_partition_name(partition_key)
         partition_models_dir = models_dir / safe_partition
         partition_models_dir.mkdir(parents=True, exist_ok=True)
-        for target in targets:
+        for target in target_plans[partition_key].selected_targets:
             x, y, target_samples = to_arrays_2d(subset, target)
             if len(target_samples) < 2:
                 continue
@@ -382,6 +503,38 @@ def run_benchmark_2d(
                 try:
                     final_model = prepare_model_for_fold(model, len(x))
                     final_model.fit(x, y)
+                    best_result = next(
+                        (
+                            row
+                            for row in rows
+                            if row["partition"] == partition_key
+                            and row["target"] == target
+                            and row["model"] == name
+                            and row["split_mode"] == "random"
+                        ),
+                        None,
+                    )
+                    metrics_payload = (
+                        {
+                            "mae": float(best_result["mae"]),
+                            "rmse": float(best_result["rmse"]),
+                            "mape": float(best_result["mape"]),
+                            "r2": float(best_result["r2"]),
+                        }
+                        if best_result
+                        else None
+                    )
+                    model_context = build_training_context(
+                        target_samples,
+                        model_dimension="2D",
+                        partition=partition_key,
+                        inputs=["speed_parameter", "xi"],
+                        target=target,
+                        training_source_root=input_dir,
+                        sample_count=len(target_samples),
+                    )
+                    model_context["available_outputs"] = list(target_plans[partition_key].available_outputs)
+                    model_context["selected_targets"] = list(target_plans[partition_key].selected_targets)
                     metadata = create_model_metadata(
                         model_name=name,
                         model_type="2D",
@@ -396,18 +549,20 @@ def run_benchmark_2d(
                             "train_samples": len(target_samples),
                             "include_gpr": include_gpr,
                         },
-                        metrics=None,
+                        metrics=metrics_payload,
+                        model_context=model_context,
                     )
                     model_path = partition_models_dir / f"{name}_{target}.pkl"
                     save_model_with_metadata(final_model, model_path, metadata)
                     saved_models += 1
                     saved_models_info.append(
                         {
-                            "partition": partition_key,
-                            "target": target,
+                            **artifact_identity(model_context),
                             "model": name,
                             "path": str(model_path.relative_to(output)),
                             "train_samples": len(target_samples),
+                            "sample_count": len(target_samples),
+                            "metrics": metrics_payload,
                         }
                     )
                 except Exception:
@@ -459,4 +614,5 @@ def run_benchmark_2d(
         "report_path": str(report_path),
         "models_dir": str(models_dir),
         "models_manifest_path": str(models_manifest_path),
+        "target_plan_path": str(target_plan_path),
     }

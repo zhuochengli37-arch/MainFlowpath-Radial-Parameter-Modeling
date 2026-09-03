@@ -22,7 +22,7 @@
 - 标识：`institute_four_section`
 - MAIN 宽表字段带 `_RI`、`_RO`、`_SI`、`_SO` 后缀。
 - 独立 Adapter 可按字段名拆分为四组 canonical 数据。
-- 当前 1D/2D/3D 训练和预测入口仍不准入该 Schema。
+- 当前 1D/2D/3D 训练入口准入该 Schema；Multi-Section预测入口尚未准入。
 - 完整规则和正式样例核验见 `docs/研究所四截面数据Adapter说明.md`。
 
 ### Institute Multi-Section Schema
@@ -69,8 +69,9 @@ units
 ## 当前模型边界
 
 1D `speed_parameter -> flow_parameter` 仍只按 `component + stage` 分区，不加入
-section。2D/3D 仍按单截面逻辑运行。四截面当前只到
-`raw file -> schema -> adapter -> canonical data` 为止。
+section。2D/3D训练对Single-Section保持 `component + stage`，对Multi-Section使用
+`component + stage + section`。Multi-Section预测和结果输出尚未接入。
 
 `dev-v1.1-single-section` 的正式单截面功能和 Legacy Validation Schema 兼容能力继续
-保留。本阶段不包含四截面训练、预测或精度验证。
+保留。当前训练烟测只验证数据加载、交叉验证、拟合、保存及元数据链路可运行，不作为
+代理模型精度验证；本阶段不包含Multi-Section预测。

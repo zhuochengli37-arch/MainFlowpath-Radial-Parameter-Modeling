@@ -113,7 +113,29 @@ class BenchmarkConfig:
     @property
     def schema_targets(self) -> list[str]:
         values = _deep_get(self._data, "dataset_schema", "targets", default=["psi", "tsi", "mai"])
+        if isinstance(values, str):
+            return [] if values.strip().lower() == "auto" else [values]
         return [str(item) for item in values]
+
+    @property
+    def schema_target_selection(self) -> str | list[str]:
+        values = _deep_get(self._data, "dataset_schema", "targets", default="auto")
+        if isinstance(values, str):
+            return values
+        if isinstance(values, list):
+            return [str(item) for item in values]
+        raise ValueError("dataset_schema.targets must be 'auto' or a list")
+
+    @property
+    def missing_target_policy(self) -> str:
+        return str(
+            _deep_get(
+                self._data,
+                "dataset_schema",
+                "missing_target_policy",
+                default="error",
+            )
+        ).lower()
 
     @property
     def schema_metadata(self) -> list[str]:

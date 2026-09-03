@@ -52,7 +52,8 @@ def create_model_metadata(
     data_path: Path,
     config: Dict[str, Any],
     metrics: Optional[Dict[str, float]] = None,
-    additional_info: Optional[Dict[str, Any]] = None
+    additional_info: Optional[Dict[str, Any]] = None,
+    model_context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     创建模型版本元数据
@@ -97,6 +98,9 @@ def create_model_metadata(
 
     if additional_info:
         metadata["additional_info"] = additional_info
+
+    if model_context:
+        metadata["model_context"] = model_context
 
     return metadata
 

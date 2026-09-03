@@ -12,42 +12,40 @@ from tqdm import tqdm
 
 from project1.experiments.benchmark_data import (
     AnySample,
-    SCHEMA_CONFIG,
-    load_samples,
+    OperatingCondition,
+    load_operating_conditions,
     resolve_1d_input_files,
-    sample_partition_from_keys,
     schema_input_type,
 )
+from project1.experiments.model_partitioning import safe_partition_name, workline_partition
 from project1.experiments.benchmark_partitioning import prepare_model_for_fold, resolve_kfold_splits
 from project1.experiments.benchmark_reporting import write_utf8_bom_text
+from project1.experiments.training_metadata import artifact_identity, build_training_context
 from workbase.common.model_versioning import create_model_metadata, save_model_with_metadata
 from project1.modeling.factory import build_1d_models
 
 
 def _sample_partition_key(sample: AnySample) -> str:
-    if SCHEMA_CONFIG.schema_partition_mode == "keys":
-        return sample_partition_from_keys(sample, SCHEMA_CONFIG.schema_partition_keys)
-    return f"{sample.component}:S{sample.stage}"
+    return str(workline_partition(sample))
 
 
 def _safe_partition_name(partition: str) -> str:
-    return partition.replace(" ", "_").replace(":", "_")
+    return safe_partition_name(partition)
 
 
-def _load_1d_samples(input_files: list[Path]) -> tuple[list[AnySample], Path]:
+def _load_1d_samples(input_files: list[Path]) -> tuple[list[OperatingCondition], Path]:
     first_input = input_files[0]
     if first_input.is_dir():
-        return load_samples(str(first_input), radial_mode="full"), first_input
+        return load_operating_conditions(first_input), first_input
 
     if len(input_files) == 1 and first_input.parent.is_dir() and any(first_input.parent.rglob("*.dat")):
-        return load_samples(str(first_input.parent), radial_mode="full"), first_input.parent
+        return load_operating_conditions(first_input.parent), first_input.parent
 
     selected_paths = {path.resolve() for path in input_files}
-    samples: list[AnySample] = []
-    for parent in sorted({path.parent.resolve() for path in input_files}, key=str):
-        for sample in load_samples(str(parent), radial_mode="full"):
-            if Path(sample.source_path).resolve() in selected_paths:
-                samples.append(sample)
+    samples: list[OperatingCondition] = []
+    for path in input_files:
+        samples.extend(load_operating_conditions(path))
+    samples = [sample for sample in samples if Path(sample.source_path).resolve() in selected_paths]
     input_source = first_input.parent if len(input_files) > 1 else first_input
     return samples, input_source
 
@@ -142,10 +140,14 @@ def _evaluate_partition(
             results.append(
                 {
                     "partition": partition,
+                    "model_dimension": "1D",
                     "component": str(details["component"]),
                     "stage": int(details["stage"]),
+                    "station": "MAIN",
+                    "section": None,
                     "target": "wcor",
                     "model": model_name,
+                    "path": f"models/{_safe_partition_name(partition)}/{model_name}_wcor.pkl",
                     "folds": completed_folds,
                     "partition_size": int(len(x_array)),
                     "cv_samples": int(len(x_array) * effective_splits),
@@ -181,6 +183,10 @@ def run_benchmark_1d(
 
     samples, input_source = _load_1d_samples(input_files)
     extracted_partitions = _extract_partitioned_rpm_wcor_pairs(samples)
+    source_samples_by_partition: dict[str, list[OperatingCondition]] = defaultdict(list)
+    for sample in samples:
+        if sample.station.upper() == "MAIN":
+            source_samples_by_partition[_sample_partition_key(sample)].append(sample)
     partition_data: dict[str, tuple[np.ndarray, np.ndarray, dict[str, object], int]] = {}
     for partition, (x_array, y_array, details) in extracted_partitions.items():
         x_array, y_array = _subsample_partition(x_array, y_array, max_samples)
@@ -222,6 +228,31 @@ def run_benchmark_1d(
 
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
+    condition_manifest = []
+    for partition, partition_samples in sorted(source_samples_by_partition.items()):
+        unique_pairs = {
+            (sample.speed_parameter, sample.flow_parameter)
+            for sample in partition_samples
+        }
+        condition_manifest.append(
+            {
+                "model_dimension": "1D",
+                "component": partition_samples[0].component,
+                "stage": partition_samples[0].stage,
+                "station": "MAIN",
+                "section": None,
+                "partition": partition,
+                "source_file_count": len({sample.source_file for sample in partition_samples}),
+                "operating_condition_record_count": len(partition_samples),
+                "unique_speed_flow_points": len(unique_pairs),
+                "conflicting_speed_count": 0,
+            }
+        )
+    condition_manifest_path = output_path / "operating_conditions_manifest.json"
+    condition_manifest_path.write_text(
+        json.dumps(condition_manifest, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     if logger is not None:
         logger.info("[3/5] Writing partitioned leaderboard...")
     leaderboard_path = output_path / "leaderboard.json"
@@ -269,6 +300,15 @@ def run_benchmark_1d(
                         if best_result
                         else None
                     )
+                    model_context = build_training_context(
+                        source_samples_by_partition[partition],
+                        model_dimension="1D",
+                        partition=partition,
+                        inputs=["speed_parameter"],
+                        target="wcor",
+                        training_source_root=input_source,
+                        sample_count=len(x_array),
+                    )
                     metadata = create_model_metadata(
                         model_name=model_name,
                         model_type="1D",
@@ -294,17 +334,18 @@ def run_benchmark_1d(
                             "component": details["component"],
                             "stage": details["stage"],
                         },
+                        model_context=model_context,
                     )
                     save_model_with_metadata(final_model, model_path, metadata)
                     saved_models_info.append(
                         {
-                            "partition": partition,
-                            "component": details["component"],
-                            "stage": details["stage"],
+                            **artifact_identity(model_context),
                             "target": "wcor",
                             "model": model_name,
                             "path": str(model_path.relative_to(output_path)),
                             "train_samples": int(len(x_array)),
+                            "sample_count": int(len(x_array)),
+                            "metrics": metrics,
                             "cv_samples": int(len(x_array) * effective_splits),
                             "train_exposure": int(len(x_array) * max(effective_splits - 1, 0)),
                         }
@@ -321,6 +362,7 @@ def run_benchmark_1d(
     if logger is not None:
         logger.info(f"  Models saved to {models_dir}")
         logger.info(f"  Models manifest saved to {models_manifest_path}")
+        logger.info(f"  Operating conditions manifest saved to {condition_manifest_path}")
         logger.info(f"  Report saved to {report_path}")
         logger.info("[5/5] Done")
     return sorted_results

@@ -4,7 +4,8 @@
 
 Institute Four-Section DATABASE 通过通用 Multi-Section 核心完成识别、解析、拆分和
 canonical内部表示。Four-Section模块只保留当前正式库兼容入口与展示顺序。Adapter的
-输出不会自动进入现有1D/2D/3D训练或预测，本阶段也不包含代理模型或AI模型。
+输出已通过显式训练加载器接入现有1D/2D/3D训练核心；Multi-Section预测、结果重组和
+AI模型仍不在当前范围内。
 
 ## 权威样例核验
 
@@ -111,16 +112,16 @@ Rho，也不强行统一两类部件的输出目标。
 
 ## 当前模型准入
 
-| 数据 | 可识别/读取 | 独立Adapter拆分 | 当前模型训练/预测 |
-|---|---:|---:|---:|
-| Legacy Validation | 是 | 不适用 | 是（兼容路径） |
-| Institute Single MAIN | 是 | 不适用 | 是 |
-| Institute INLET/OUTLET | 是 | 不适用 | 否 |
-| Institute Four MAIN | 是 | 是 | 否 |
+| 数据 | 可识别/读取 | 独立Adapter拆分 | 当前训练 | 当前预测 |
+|---|---:|---:|---:|---:|
+| Legacy Validation | 是 | 不适用 | 是（兼容路径） | 是（兼容路径） |
+| Institute Single MAIN | 是 | 不适用 | 是 | 是 |
+| Institute INLET/OUTLET | 是 | 不适用 | 否 | 否 |
+| Institute Four MAIN | 是 | 是 | 是 | 否 |
 
-1D 工作线仍只按 `component + stage` 分区，section 不参与 1D partition。现有 2D/3D
-训练和预测加载器仍拒绝 `institute_four_section`；后续接入四截面模型必须另行设计和
-验证。
+1D 工作线仍只按 `component + stage` 分区，section 不参与 1D partition；一个宽表文件只
+贡献一条工况记录。2D/3D训练按 `component + stage + section` 分区。预测加载器仍拒绝
+`institute_four_section`，避免训练准入被误解为预测链路已完成。
 
 ## 完整正式库 Adapter 审计
 

@@ -91,6 +91,19 @@ def test_benchmark_saves_models_by_component_partition(tmp_path: Path, monkeypat
     assert (output / "models" / "HTB_S1" / "linear_wcor.pkl").exists()
     manifest = json.loads((output / "models" / "models_manifest.json").read_text(encoding="utf-8"))
     assert {str(row["partition"]) for row in manifest} == {"CMP:S1", "HTB:S1"}
+    assert {row["section"] for row in manifest} == {None}
+    assert {row["model_dimension"] for row in manifest} == {"1D"}
+    condition_manifest = json.loads(
+        (output / "operating_conditions_manifest.json").read_text(encoding="utf-8")
+    )
+    assert {row["partition"] for row in condition_manifest} == {"CMP:S1", "HTB:S1"}
+    assert {row["operating_condition_record_count"] for row in condition_manifest} == {2}
+    assert {row["unique_speed_flow_points"] for row in condition_manifest} == {2}
+    metadata = json.loads(
+        (output / "models" / "CMP_S1" / "linear_wcor.json").read_text(encoding="utf-8")
+    )
+    assert metadata["model_context"]["section"] is None
+    assert metadata["model_context"]["partition"] == "CMP:S1"
 
 
 def test_prediction_selects_best_model_from_requested_partition(tmp_path: Path):

@@ -8,7 +8,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import GroupKFold, KFold
 from sklearn.neighbors import KNeighborsRegressor
 
-from project1.experiments.benchmark_data import AnySample, SCHEMA_CONFIG, sample_partition_from_keys
+from project1.experiments.benchmark_data import AnySample
+from project1.experiments.model_partitioning import radial_partition
 
 
 def to_arrays(samples: list[AnySample], target: str) -> tuple[np.ndarray, np.ndarray, list[AnySample]]:
@@ -27,19 +28,15 @@ def to_arrays_2d(samples: list[AnySample], target: str) -> tuple[np.ndarray, np.
 
 def partition_samples(samples: list[AnySample], partition_mode: str) -> dict[str, list[AnySample]]:
     groups: dict[str, list[AnySample]] = defaultdict(list)
-    schema_partition_mode = SCHEMA_CONFIG.schema_partition_mode
-    schema_partition_keys = SCHEMA_CONFIG.schema_partition_keys
     for sample in samples:
-        if schema_partition_mode == "keys":
-            key = sample_partition_from_keys(sample, schema_partition_keys)
-        elif partition_mode in {"single", "none"}:
+        if partition_mode in {"single", "none"}:
             key = "all"
         elif partition_mode == "family":
             key = sample.family
         elif partition_mode == "component":
             key = sample.component
         else:
-            key = f"{sample.component}:S{sample.stage}"
+            key = str(radial_partition(sample))
         groups[key].append(sample)
     return dict(groups)
 
