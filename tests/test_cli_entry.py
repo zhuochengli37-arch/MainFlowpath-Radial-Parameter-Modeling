@@ -40,6 +40,28 @@ def test_cli_parser_supports_current_2d_prediction():
     assert extra == []
 
 
+def test_cli_parser_supports_direct_3d_workflow():
+    from project1.cli import build_parser
+
+    parser = build_parser()
+    args, extra = parser.parse_known_args(["current", "direct-3d"])
+
+    assert args.handler == "workflow:current_direct_3d"
+    assert extra == []
+
+
+def test_direct_3d_runs_training_before_prediction(monkeypatch: pytest.MonkeyPatch):
+    import workbase.current_scripts.direct_3d as workflow
+
+    calls = []
+    monkeypatch.setattr(workflow, "run_benchmark", lambda: calls.append("train"))
+    monkeypatch.setattr(workflow, "run_prediction", lambda: calls.append("predict"))
+
+    workflow.main()
+
+    assert calls == ["train", "predict"]
+
+
 def test_cli_parser_parses_generic_arguments():
     from project1.cli import build_parser
 

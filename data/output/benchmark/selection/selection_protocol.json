@@ -1,0 +1,127 @@
+{
+  "protocol_version": "1.0",
+  "taxonomy_version": "1.0",
+  "status": "defined_not_executed",
+  "selection_not_run": true,
+  "scope": {
+    "real_cfd_data_required": true,
+    "synthetic_results_allowed_for_selection": false,
+    "condition_level_split_required": true,
+    "shared_data_conditions_required": true,
+    "automatic_model_selection": false
+  },
+  "metric_policy": {
+    "base_metrics": {
+      "RMSE": "primary_absolute_error_metric",
+      "MAE": "robust_supporting_absolute_error_metric",
+      "MAPE": "supporting_relative_error_metric",
+      "R2": "fit_and_generalization_explanation_metric",
+      "NRMSE_range": "primary_cross_case_scale_normalized_metric"
+    },
+    "raw_rmse_cross_stage_section_target_average": "prohibited",
+    "normalized_metric": "NRMSE_range",
+    "fixed_weight_total_score": "prohibited",
+    "ranking_rule": "no_single_metric_automatic_winner"
+  },
+  "stages": [
+    {
+      "stage": 1,
+      "name": "Engineering Eligibility Check",
+      "requirements": [
+        "fit_success",
+        "predict_success",
+        "finite_predictions",
+        "no_nan_or_inf",
+        "condition_level_split_without_leakage",
+        "artifact_valid",
+        "reproducible_run"
+      ],
+      "failure_status": "engineering_failure",
+      "failure_action": "retain_history_and_exclude_from_later_accuracy_screening"
+    },
+    {
+      "stage": 2,
+      "name": "Unified Accuracy Benchmark",
+      "eligible_input": "stage_1_passed_models_only",
+      "requirements": [
+        "identical_dataset",
+        "identical_condition_split",
+        "identical_feature_and_target_definitions",
+        "identical_metric_pipeline"
+      ],
+      "metrics": [
+        "RMSE",
+        "MAE",
+        "MAPE",
+        "R2",
+        "NRMSE_range"
+      ],
+      "aggregation_constraint": "do_not_average_raw_rmse_across_different_scales"
+    },
+    {
+      "stage": 3,
+      "name": "Within-Family Screening",
+      "taxonomy": "paper_family_I_to_VI",
+      "criteria": [
+        "accuracy",
+        "stability",
+        "training_cost",
+        "inference_cost",
+        "robustness_across_cases",
+        "model_specific_scientific_value"
+      ],
+      "default_representative_count": "1_to_2",
+      "hard_count_limit": false,
+      "allow_all_when_family_is_small": true,
+      "allow_one_when_models_are_redundant": true,
+      "single_case_selection": "prohibited"
+    },
+    {
+      "stage": 4,
+      "name": "Representative Model Comparison",
+      "dimensions": [
+        "overall_accuracy",
+        "stage_generalization",
+        "section_generalization",
+        "target_specific_behavior",
+        "sample_efficiency",
+        "runtime",
+        "stability"
+      ],
+      "model_specific_optional_dimensions": [
+        "uncertainty",
+        "symbolic_complexity",
+        "interpretability"
+      ],
+      "uniform_special_capability_requirement": false
+    },
+    {
+      "stage": 5,
+      "name": "Final Scientific Analysis",
+      "questions": [
+        "method_family_suitability_for_small_sample_radial_distributions",
+        "accuracy_and_computational_cost_tradeoffs",
+        "stage_section_and_target_differences",
+        "performance_under_changing_cfd_sample_count",
+        "additional_scientific_value_from_uncertainty_symbolic_pretrained_or_engineering_priors"
+      ],
+      "single_best_model_conclusion_required": false,
+      "conclusions_generated": false
+    }
+  ],
+  "selection_principles": [
+    "eligibility",
+    "accuracy",
+    "stability",
+    "cost",
+    "family_representation",
+    "scientific_value"
+  ],
+  "prohibited_actions": [
+    "select_from_synthetic_metrics",
+    "rank_all_models_as_one_undifferentiated_family",
+    "use_a_fixed_subjective_weighted_score",
+    "discard_engineering_failure_history",
+    "select_before_real_benchmark"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "family": null,
+  "selected_models": [],
+  "selection_reason": "",
+  "status": "pending",
+  "selection_protocol_version": "1.0",
+  "taxonomy_version": "1.0",
+  "selection_not_run": true,
+  "family_selections": {
+    "I": [],
+    "II": [],
+    "III": [],
+    "IV": [],
+    "V": [],
+    "VI": []
+  }
+}

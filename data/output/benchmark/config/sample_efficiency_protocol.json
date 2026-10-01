@@ -1,0 +1,111 @@
+{
+  "protocol_version": "v1",
+  "status": "defined_not_instantiated",
+  "scope": {
+    "real_cfd_data_required": true,
+    "representative_models_only": true,
+    "representative_selection_required": true,
+    "all_35_models_by_default": false,
+    "accuracy_screening_stage": false
+  },
+  "training_fraction_definition": "fraction of the complete training-condition set after the formal condition-level train/validation/test split",
+  "training_fractions": [0.25, 0.5, 0.75, 1.0],
+  "count_rounding_policy": "to_be_finalized_when_real_condition_count_is_known",
+  "concrete_training_condition_counts": null,
+  "full_training_condition_count_known": false,
+  "split_unit": "condition",
+  "condition_definition": ["n", "w"],
+  "explicit_condition_or_state_id_preferred_when_validated": true,
+  "radial_points_grouped": true,
+  "xi_independent_sampling": "prohibited",
+  "validation_fixed": true,
+  "test_fixed": true,
+  "one_hundred_percent_definition": "all and only the formal training conditions; excludes validation and test conditions",
+  "subset_rule": {
+    "nested": true,
+    "required_relation": "0.25 subset_of 0.50 subset_of 0.75 subset_of 1.00",
+    "construction": "generate one fixed order of complete training conditions per compatible condition universe and take nested prefixes after integer counts are frozen",
+    "independent_sampling_per_fraction": "prohibited",
+    "identical_subsets_for_all_models_in_same_case_fraction": true,
+    "model_specific_resampling": "prohibited",
+    "subset_hash_required_when_instantiated": true
+  },
+  "case_condition_universe": {
+    "case_identity": ["component", "stage", "section", "target"],
+    "global_condition_index_assumed": false,
+    "reuse_manifest_when_complete_condition_sets_are_identical": true,
+    "separate_manifest_when_condition_sets_differ": true
+  },
+  "seeds": {
+    "split_seed_reference": "data/output/benchmark/config/stochastic_repeat_protocol.json:data_split.split_seed",
+    "split_seed": 42,
+    "subset_selection_seed": 20261001,
+    "model_seed_reference": "data/output/benchmark/config/stochastic_repeat_protocol.json:representative_comparison",
+    "roles_must_remain_separate": true,
+    "model_seed_must_not_change_subset": true
+  },
+  "metric_protocol_reference": "data/output/benchmark/config/metric_definitions.json",
+  "metrics": ["RMSE", "MAE", "MAPE", "R2", "NRMSE_range"],
+  "evaluation_range_denominator_fixed_across_fractions": true,
+  "repeat_protocol_reference": "data/output/benchmark/config/stochastic_repeat_protocol.json",
+  "repeat_stage": "representative_comparison",
+  "repeats_per_fraction": {
+    "deterministic": {"runs": 1},
+    "stochastic": {"runs": 5, "model_seeds": [42, 2026, 3407, 1234, 5678]},
+    "search_stochastic": {
+      "default_runs": 3,
+      "default_model_seeds": [42, 2026, 3407],
+      "conditional_five_run_extension": "inherit stochastic_repeat_protocol v1 before Representative Model Comparison starts"
+    }
+  },
+  "same_model_seed_set_at_every_fraction": true,
+  "aggregation": {
+    "stochastic_statistics": ["mean", "sample_std"],
+    "metrics": ["RMSE", "MAE", "MAPE", "R2", "NRMSE_range"],
+    "best_run_as_fraction_result": "prohibited",
+    "deterministic_result": "single_run"
+  },
+  "result_schema": [
+    "experiment_id",
+    "component",
+    "stage",
+    "section",
+    "target",
+    "model_key",
+    "training_fraction",
+    "training_condition_count",
+    "train_condition_hash",
+    "validation_condition_hash",
+    "test_condition_hash",
+    "split_seed",
+    "subset_selection_seed",
+    "model_seed",
+    "repeat_index",
+    "evaluation_subset",
+    "RMSE",
+    "MAE",
+    "MAPE",
+    "R2",
+    "NRMSE_range",
+    "status"
+  ],
+  "outputs": {
+    "future_directory": "data/output/benchmark/sample_efficiency",
+    "real_records_created": false,
+    "subset_manifests_created": false,
+    "empty_csv_template_created": false,
+    "model_artifacts_created": false,
+    "prediction_files_created": false
+  },
+  "plotting": "deferred",
+  "learning_curves_generated": false,
+  "prohibited_extensions": [
+    "active_learning",
+    "optimal_design_of_experiments",
+    "latin_hypercube_resampling",
+    "uncertainty_driven_sampling",
+    "adaptive_cfd_condition_selection",
+    "automatic_best_training_fraction",
+    "convergence_threshold_before_real_results"
+  ]
+}

@@ -4,7 +4,10 @@ from dataclasses import dataclass
 from math import isnan
 from numbers import Real
 from pathlib import Path
+from typing import Iterable, Mapping
 
+from project1.experiments.prediction_results import PredictionResult
+from project1.experiments.prediction_samples import PredictionSample
 from project1.services.data_reader import read_tabular_file
 
 
@@ -104,6 +107,86 @@ def write_table_like_template(
         lines.append(_join_values(values, template.delimiter))
 
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_multi_section_prediction_tables(
+    samples: Iterable[PredictionSample],
+    results: Iterable[PredictionResult],
+    source_columns: Mapping[str, Iterable[str]],
+    *,
+    predict_root: str | Path,
+    output_root: str | Path,
+) -> list[Path]:
+    """Rebuild section-aware predictions in each source file's wide-table shape."""
+
+    sample_list = list(samples)
+    grouped: dict[str, list[PredictionSample]] = {}
+    for sample in sample_list:
+        grouped.setdefault(sample.source_file, []).append(sample)
+
+    grouped_results: dict[str, list[tuple[PredictionSample, PredictionResult]]] = {}
+    for result in results:
+        sample = sample_list[result.sample_index]
+        grouped_results.setdefault(sample.source_file, []).append((sample, result))
+    written: list[Path] = []
+    root = Path(predict_root)
+    destination = Path(output_root)
+    for source_file, source_samples in grouped.items():
+        columns = list(source_columns[source_file])
+        rows = {
+            sample.row_index: {column: float("nan") for column in columns}
+            for sample in source_samples
+        }
+        for sample in source_samples:
+            row = rows[sample.row_index]
+            row.update(
+                {
+                    str(column): value
+                    for column, value in sample.original_row.items()
+                    if str(column) in columns
+                }
+            )
+            for canonical_name, source_name in sample.source_fields.items():
+                if source_name not in columns:
+                    columns.append(source_name)
+                    for existing in rows.values():
+                        existing[source_name] = float("nan")
+                row[source_name] = {
+                    "xi": sample.xi,
+                    "speed_parameter": sample.speed_parameter,
+                    "flow_parameter": sample.flow_parameter,
+                }.get(canonical_name, float("nan"))
+
+        for sample, result in grouped_results.get(source_file, []):
+            target = result.target
+            column = sample.source_fields.get(target)
+            if column is None:
+                column = target if sample.section is None else f"{target}_{sample.section}"
+                if column not in columns:
+                    columns.append(column)
+                    for existing in rows.values():
+                        existing[column] = float("nan")
+            rows[result.row_index][column] = result.predicted_value
+
+        source_path = Path(source_file)
+        try:
+            relative = source_path.resolve().relative_to(root.resolve())
+        except ValueError:
+            relative = Path(source_path.name)
+        template = TabularTemplate(
+            source_path=source_path,
+            columns=columns,
+            delimiter=detect_tabular_delimiter(source_path),
+            suffix=source_path.suffix or ".txt",
+        )
+        output_file = destination / relative
+        write_table_like_template(
+            output_file,
+            template,
+            [rows[row_index] for row_index in sorted(rows)],
+        )
+        written.append(output_file)
+    return written
 
 
 def _join_values(values: list[str], delimiter: str) -> str:

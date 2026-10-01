@@ -93,7 +93,8 @@ def test_generic_predict_accepts_sparse_prediction_rows(tmp_path: Path):
     assert len(result["outputs"]) == 1
 
     output_file = Path(result["outputs"][0])
-    rows = list(csv.DictReader(output_file.open("r", encoding="utf-8", newline="")))
+    with output_file.open("r", encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
     assert len(rows) == 2
     assert rows[0]["x"] == "0.5"
     assert rows[0]["y1"] == ""

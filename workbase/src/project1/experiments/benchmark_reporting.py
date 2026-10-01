@@ -7,6 +7,9 @@ from pathlib import Path
 import numpy as np
 
 
+RADIAL_SPLIT_MODES = ("condition", "random", "rpm", "wcor")
+
+
 def real_partition_sample_count(items: list[dict[str, object]], partition: str) -> int:
     for item in items:
         if str(item["partition"]) == partition:
@@ -95,7 +98,7 @@ def write_partition_leaderboards(rows: list[dict[str, object]], output: Path, ra
         ]
         partition_targets = sorted({str(row["target"]) for row in items})
         for target in partition_targets:
-            for split_mode in ("random", "rpm", "wcor"):
+            for split_mode in RADIAL_SPLIT_MODES:
                 subset = [row for row in items if row["target"] == target and row["split_mode"] == split_mode]
                 if not subset:
                     continue
@@ -114,11 +117,11 @@ def write_partition_leaderboards(rows: list[dict[str, object]], output: Path, ra
         summary_lines.append("")
         summary_lines.append("## 全部模型误差明细（按 RMSE 排序）")
         for target in partition_targets:
-            for split_mode in ("random", "rpm", "wcor"):
+            for split_mode in RADIAL_SPLIT_MODES:
                 append_ranked_rows(summary_lines, items, target, split_mode, "rmse")
         summary_lines.append("## 全部模型误差明细（按 MAPE 排序）")
         for target in partition_targets:
-            for split_mode in ("random", "rpm", "wcor"):
+            for split_mode in RADIAL_SPLIT_MODES:
                 append_ranked_rows(summary_lines, items, target, split_mode, "mape")
         partition_report_path = partition_dir / f"benchmark_report_{radial_mode}.md"
         write_utf8_bom_text(partition_report_path, "\n".join(summary_lines) + "\n")
@@ -216,7 +219,7 @@ def build_benchmark_report(
 
         summary_lines.append(f"### {component} 整体最佳模型（按 RMSE）")
         for target in targets:
-            for split_mode in ("random", "rpm", "wcor"):
+            for split_mode in RADIAL_SPLIT_MODES:
                 subset = [row for row in component_rows if row["target"] == target and row["split_mode"] == split_mode]
                 if not subset:
                     continue
@@ -232,7 +235,7 @@ def build_benchmark_report(
 
         summary_lines.append(f"### {component} 整体最佳模型（按 MAPE）")
         for target in targets:
-            for split_mode in ("random", "rpm", "wcor"):
+            for split_mode in RADIAL_SPLIT_MODES:
                 subset = [row for row in component_rows if row["target"] == target and row["split_mode"] == split_mode]
                 if not subset:
                     continue
@@ -253,11 +256,11 @@ def build_benchmark_report(
             summary_lines.append(f"#### {partition}（{partition_size} 个样本）")
             summary_lines.append("##### 按 RMSE 排序")
             for target in targets:
-                for split_mode in ("random", "rpm", "wcor"):
+                for split_mode in RADIAL_SPLIT_MODES:
                     append_ranked_rows(summary_lines, partition_items, target, split_mode, "rmse")
             summary_lines.append("##### 按 MAPE 排序")
             for target in targets:
-                for split_mode in ("random", "rpm", "wcor"):
+                for split_mode in RADIAL_SPLIT_MODES:
                     append_ranked_rows(summary_lines, partition_items, target, split_mode, "mape")
         summary_lines.append("")
 

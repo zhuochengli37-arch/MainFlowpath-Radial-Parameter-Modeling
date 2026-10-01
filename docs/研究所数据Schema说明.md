@@ -22,7 +22,7 @@
 - 标识：`institute_four_section`
 - MAIN 宽表字段带 `_RI`、`_RO`、`_SI`、`_SO` 后缀。
 - 独立 Adapter 可按字段名拆分为四组 canonical 数据。
-- 当前 1D/2D/3D 训练及共享2D/3D Canonical预测核心准入该Schema；最终宽表输出尚未准入。
+- 当前 1D/2D/3D 训练及共享2D/3D Canonical预测核心准入该Schema；Direct-3D已准入最终宽表输出。
 - 完整规则和正式样例核验见 `docs/研究所四截面数据Adapter说明.md`。
 
 ### Institute Multi-Section Schema

@@ -62,8 +62,14 @@ def _append_ranked_rows(
     append_ranked_rows(summary_lines, rows, target, split_mode, ranking_metric)
 
 
-def _cv_splits(samples: list[AnySample], mode: str, requested_splits: int):
-    return cv_splits(samples, mode, requested_splits)
+def _cv_splits(
+    samples: list[AnySample],
+    mode: str,
+    requested_splits: int,
+    *,
+    random_state: int = 42,
+):
+    return cv_splits(samples, mode, requested_splits, random_state=random_state)
 
 
 def _resolve_kfold_splits(sample_count: int, requested_splits: int) -> int:

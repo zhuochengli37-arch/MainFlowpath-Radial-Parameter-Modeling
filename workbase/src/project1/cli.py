@@ -24,6 +24,7 @@ CURRENT_WORKFLOWS: tuple[tuple[str, str, str, tuple[str, ...]], ...] = (
     ("predict-2d-with-workline", "current_predict_2d_workline", "运行 2D + workline 预测（兼容旧流程）", ()),
     ("benchmark-3d", "current_benchmark_3d", "运行领域专用 3D benchmark", ()),
     ("predict-3d", "current_predict_3d", "运行领域专用 3D 预测", ()),
+    ("direct-3d", "current_direct_3d", "运行 Direct-3D 训练与预测", ()),
 )
 
 CURRENT_WORKFLOWS = tuple(
@@ -49,16 +50,7 @@ TOP_LEVEL_EXAMPLES = """Examples:
 """
 
 CURRENT_EXAMPLES = """Examples:
-  python -m project1 current benchmark-1d
-  python -m project1 current train-workline
-  python -m project1 current predict-3d
-
-Notes:
-  Current workflows read settings from `config/benchmark_config.yaml`.
-  You can run `python -m project1 current <command> --help` for details.
-"""
-
-CURRENT_EXAMPLES = """Examples:
+  python -m project1 current direct-3d
   python -m project1 current benchmark-1d
   python -m project1 current benchmark-2d
   python -m project1 current predict-3d

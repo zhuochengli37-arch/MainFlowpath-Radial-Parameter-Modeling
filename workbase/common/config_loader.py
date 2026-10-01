@@ -351,7 +351,7 @@ class BenchmarkConfig:
 
     @property
     def predict_3d_selection_split_mode(self) -> str:
-        return str(_deep_get(self._data, "predict_3d", "selection_split_mode", default="random")).lower()
+        return str(_deep_get(self._data, "predict_3d", "selection_split_mode", default="condition")).lower()
 
     @property
     def predict_3d_selection_metric(self) -> str:

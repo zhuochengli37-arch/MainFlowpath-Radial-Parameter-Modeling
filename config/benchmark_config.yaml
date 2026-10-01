@@ -1,5 +1,6 @@
 ﻿# AIR2 Project1 领域专用配置
 # 建议直接使用：
+# - python -m project1 current direct-3d
 # - python -m project1 current benchmark-1d / benchmark-2d / benchmark-3d
 # - python -m project1 current predict-1d / predict-2d / predict-3d
 # - python workbase/current_scripts/workline_pipeline.py
@@ -29,7 +30,7 @@ dataset_schema:
       description: "研究所正式单截面数据；当前模型只使用 station=MAIN"
       fields: ["xi", "Cpt", "Ctt", "Cps", "Cts", "MA"]
     institute_four_section:
-      description: "研究所 RI/RO/SI/SO 四截面数据；训练及2D/3D canonical预测core已接入，最终宽表输出未接入"
+      description: "研究所 RI/RO/SI/SO 四截面数据；训练及2D/3D canonical预测core已接入，Direct-3D可输出最终宽表"
       version: "v1"
       sections: ["RI", "RO", "SI", "SO"]
       compatibility_of: "institute_multi_section"
@@ -133,7 +134,7 @@ predict_3d:
 
   partition: null
   model_name: null
-  selection_split_mode: "random"  # 可选：random / rpm / wcor / any
+  selection_split_mode: "condition"  # 可选：condition / random / rpm / wcor / any
   selection_metric: "rmse"        # 可选：rmse / mape / mae
   save_results: true
   result_format: "both"
@@ -166,37 +167,8 @@ predict_1d:
   result_format: "both"
   generate_report: true
 
-# ============================================
-# 运行时模型参考
-# ============================================
-# 注意：
-# 1. 这份列表用于说明当前运行时已注册的模型名称；
-# 2. 具体工作流会按维度自动选择可用子集；
-# 3. GPR 模型是否参与训练，仍受各段落中的 include_gpr 开关控制；
-# 4. 该列表不作为“只跑这些模型”的强约束开关。
-models:
-  - linear_deg2
-  - ridge_deg2
-  - spline_regression
-  - knn_distance
-  - random_forest
-  - gradient_boosting
-  - xgboost
-  - lightgbm
-  - lasso
-  - elastic_net
-  - svr_rbf
-  - poly2
-  - poly3
-  - gpr_rbf
-  - gpr_matern
-  - piecewise_ridge
-  - tensor_spline
-  - lowess_like
-  - rbf
-  - hierarchical_workline
-  - endpoint_hub_tip
-  - physics_clamped_ridge
+# Direct-3D 模型目录以 project1.modeling.registry 为唯一来源；这里不再维护
+# 一份不会被运行时读取的重复列表。GPR 是否参与仍由 include_gpr 控制。
 
 # ============================================
 # 高级配置

@@ -1,0 +1,60 @@
+{
+  "protocol_version": "1.0",
+  "status": "provisional_v1",
+  "formal_metrics": [
+    "RMSE",
+    "MAE",
+    "MAPE",
+    "R2",
+    "NRMSE_range"
+  ],
+  "definitions": {
+    "RMSE": {
+      "formula": "sqrt(mean((y_pred - y_true)^2))",
+      "role": "primary_absolute_error_metric"
+    },
+    "MAE": {
+      "formula": "mean(abs(y_pred - y_true))",
+      "role": "supporting_absolute_error_metric"
+    },
+    "MAPE": {
+      "formula": "mean(abs((y_true - y_pred) / max(abs(y_true), 1e-6)))",
+      "role": "supporting_relative_error_metric",
+      "storage_unit": "ratio",
+      "zero_target_denominator_floor": 1e-6
+    },
+    "R2": {
+      "formula": "1 - sum((y_true - y_pred)^2) / sum((y_true - mean(y_true))^2)",
+      "role": "supporting_fit_and_generalization_metric"
+    },
+    "NRMSE_range": {
+      "formula": "RMSE / (max(y_eval) - min(y_eval))",
+      "role": "primary_cross_case_scale_normalized_metric",
+      "validation_y_eval": "y_validation",
+      "validation_denominator": "max(y_validation) - min(y_validation)",
+      "test_y_eval": "y_test",
+      "test_denominator": "max(y_test) - min(y_test)",
+      "storage_unit": "ratio",
+      "storage_example": 0.032,
+      "presentation_percentage_conversion": "multiply_ratio_by_100_only_at_presentation",
+      "undefined_behavior": {
+        "reason": "constant_or_near_constant_target",
+        "stored_value": null,
+        "denominator_clamping": "prohibited",
+        "target_range_test": "target_range <= absolute_tolerance + relative_tolerance * max(1.0, max(abs(y_eval)))",
+        "absolute_tolerance": 0.0,
+        "relative_tolerance": 1e-12
+      }
+    }
+  },
+  "aggregation_constraints": {
+    "average_raw_rmse_across_unlike_targets_stages_or_sections": "prohibited",
+    "NRMSE_range_replaces_RMSE": false
+  },
+  "excluded_metrics_v1": [
+    "NRMSE_mean",
+    "NRMSE_std",
+    "CVRMSE",
+    "SMAPE"
+  ]
+}

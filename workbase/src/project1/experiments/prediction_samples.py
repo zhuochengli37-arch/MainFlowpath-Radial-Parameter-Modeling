@@ -284,6 +284,7 @@ def _load_multi_file(path: Path, radial_mode: str, require_flow: bool) -> list[P
                 max(indices, key=lambda index: section.xi[index]),
             ]
         for section_row_index in indices:
+            source_row_index = section.source_row_indices[section_row_index]
             result.append(
                 PredictionSample(
                     source_file=canonical.source_file,
@@ -299,16 +300,22 @@ def _load_multi_file(path: Path, radial_mode: str, require_flow: bool) -> list[P
                     xi=section.xi[section_row_index],
                     schema_name=canonical.schema_name,
                     schema_version=canonical.schema_version,
-                    row_index=section_row_index,
+                    row_index=source_row_index,
                     section_row_index=section_row_index,
                     source_fields=dict(section.source_fields),
                     original_row={
-                        source_name: (
-                            section.xi[section_row_index]
-                            if canonical_name == "xi"
-                            else section.outputs[canonical_name][section_row_index]
-                        )
-                        for canonical_name, source_name in section.source_fields.items()
+                        **{
+                            name: values[source_row_index]
+                            for name, values in canonical.source_metadata.items()
+                        },
+                        **{
+                            source_name: (
+                                section.xi[section_row_index]
+                                if canonical_name == "xi"
+                                else section.outputs[canonical_name][section_row_index]
+                            )
+                            for canonical_name, source_name in section.source_fields.items()
+                        },
                     },
                 )
             )
@@ -348,7 +355,13 @@ def load_prediction_batch(
         columns = [str(column) for column in parsed["columns"]]
         rows = list(parsed["rows"])
         source_columns[str(path)] = tuple(columns)
-        schema = detect_dataset_schema(columns, station=station)
+        try:
+            schema = detect_dataset_schema(columns, station=station)
+        except ValueError as exc:
+            exclusions.append(
+                PredictionExclusion(str(path), station, f"invalid prediction schema: {exc}")
+            )
+            continue
         if schema in MULTI_SCHEMAS:
             samples.extend(_load_multi_file(path, radial_mode, require_flow))
         else:

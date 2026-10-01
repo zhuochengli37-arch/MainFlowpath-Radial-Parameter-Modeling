@@ -7,21 +7,9 @@ from sklearn.linear_model import Ridge
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 
+from project1.modeling.registry import model_category_map
 
-MODEL_CATEGORY = {
-    "linear_deg2": "工程回归 / 二次响应面",
-    "ridge_deg2": "工程回归 / 二次响应面",
-    "piecewise_ridge": "工程回归 / 分段岭回归",
-    "spline_regression": "插值拟合 / 样条回归",
-    "tensor_spline": "插值拟合 / 张量样条",
-    "lowess_like": "插值拟合 / LOWESS",
-    "knn_distance": "插值拟合 / 邻域距离",
-    "rbf": "插值拟合 / RBF",
-    "gpr_matern": "概率模型 / GPR-Kriging",
-    "hierarchical_workline": "结构化模型 / 分层工作线",
-    "endpoint_hub_tip": "结构化模型 / 端点-轮毂-叶尖",
-    "physics_clamped_ridge": "物理约束 / 截断岭回归",
-}
+MODEL_CATEGORY = model_category_map(implemented_only=True)
 
 
 class RBFRegressor(BaseEstimator, RegressorMixin):

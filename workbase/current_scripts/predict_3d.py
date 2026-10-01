@@ -38,6 +38,7 @@ from workbase.common.logger_config import setup_logger
 from workbase.common.prediction_output import (
     find_matching_template_file,
     load_tabular_template,
+    write_multi_section_prediction_tables,
     write_table_like_template,
 )
 from workbase.common.validators import ValidationError, validate_directory_exists
@@ -116,7 +117,7 @@ def load_partition_leaderboard_rows(output_dir: Path, radial_mode: str) -> list[
 
 
 def _validate_selection_config(selection_split_mode: str, selection_metric: str) -> None:
-    valid_split_modes = {"random", "rpm", "wcor", "any"}
+    valid_split_modes = {"condition", "random", "rpm", "wcor", "any"}
     valid_metrics = {"rmse", "mape", "mae"}
     if selection_split_mode not in valid_split_modes:
         raise ValueError(
@@ -280,9 +281,16 @@ def predict_3d(
 
     output_root = Path(PREDICTION_OUTPUT)
     if any(sample.section is not None for sample in samples):
+        written = write_multi_section_prediction_tables(
+            samples,
+            results,
+            batch.source_columns,
+            predict_root=predict_dir,
+            output_root=output_root,
+        )
         path = _write_canonical_debug(results, output_root)
-        logger.info(f"Multi-Section canonical调试结果: {path}")
-        logger.info("最终研究所Multi-Section宽表输出尚未实现")
+        logger.info(f"Multi-Section宽表结果: {len(written)} 个文件")
+        logger.info(f"Multi-Section canonical结果: {path}")
     else:
         _write_legacy_single_results(
             samples,

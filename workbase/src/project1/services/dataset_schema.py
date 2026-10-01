@@ -26,10 +26,7 @@ def detect_dataset_schema(columns: Iterable[object], station: str = "MAIN") -> s
     """Classify an actual header while keeping station and section semantics separate."""
 
     normalized = [_normalize_column(column) for column in columns]
-    try:
-        sections = discover_sections(normalized)
-    except ValueError:
-        sections = ()
+    sections = discover_sections(normalized)
     if sections:
         section_names = {descriptor.name for descriptor in sections}
         if len(sections) == 4 and section_names == INSTITUTE_FOUR_SECTION_NAMES:

@@ -1,0 +1,25 @@
+{
+  "protocol_version": "1.0",
+  "status": "provisional_v1_not_executed",
+  "real_cfd_data_required": true,
+  "selection_protocol": "data/output/benchmark/selection/selection_protocol.json",
+  "taxonomy": "data/output/benchmark/config/model_taxonomy.csv",
+  "metric_protocol": "data/output/benchmark/config/metric_definitions.json",
+  "repeat_protocol": "data/output/benchmark/config/stochastic_repeat_protocol.json",
+  "sample_efficiency_protocol": "data/output/benchmark/config/sample_efficiency_protocol.json",
+  "applies_to_selection_stages": [2, 4],
+  "condition_level_split_required": true,
+  "sample_efficiency": {
+    "status": "protocol_defined_not_instantiated",
+    "planned_training_condition_fractions": [0.25, 0.5, 0.75, 1.0],
+    "nested_training_sets_required": true,
+    "validation_set_fixed": true,
+    "test_set_fixed": true,
+    "concrete_subsets_created": false,
+    "sample_counts_frozen": false,
+    "subset_selection_seed": 20261001
+  },
+  "benchmark_run_started": false,
+  "models_trained_in_phase_5c": false,
+  "selection_run_in_phase_5c": false
+}

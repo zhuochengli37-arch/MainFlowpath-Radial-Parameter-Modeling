@@ -63,6 +63,7 @@ class CanonicalSectionData:
     section: str
     source_section: str
     xi: tuple[float, ...]
+    source_row_indices: tuple[int, ...]
     outputs: dict[str, tuple[float, ...]]
     source_fields: dict[str, str]
     units: dict[str, str] = field(default_factory=dict)
@@ -231,6 +232,7 @@ def adapt_multi_section_rows(
             if name != radial_name
         }
         xi_values: list[float] = []
+        source_row_indices: list[int] = []
         output_values: dict[str, list[float]] = {
             name: [] for name in output_sources
         }
@@ -256,6 +258,7 @@ def adapt_multi_section_rows(
                     f"at line {row_number}: {', '.join(missing_outputs)}"
                 )
             xi_values.append(xi)
+            source_row_indices.append(row_number - 2)
             for name, value in current_outputs.items():
                 output_values[name].append(float(value))
 
@@ -267,6 +270,7 @@ def adapt_multi_section_rows(
             section=section_layout.name,
             source_section=section_layout.source_name,
             xi=tuple(xi_values),
+            source_row_indices=tuple(source_row_indices),
             outputs={name: tuple(values) for name, values in output_values.items()},
             source_fields=dict(section_layout.source_fields),
             units={name: unit_map[name] for name in section_layout.source_fields if name in unit_map},

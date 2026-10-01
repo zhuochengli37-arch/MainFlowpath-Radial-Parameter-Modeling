@@ -1,0 +1,23 @@
+# Isolated Phase 3A environment only; do not install into the authoritative .venv.
+click==8.5.0
+cloudpickle==3.1.2
+filelock==3.32.7
+joblib==1.6.0
+juliacall==0.9.36
+juliapkg==0.1.27
+mpmath==1.3.0
+numpy==2.2.6
+pandas==2.3.3
+pysr==2.5.2
+python-dateutil==2.9.0.post0
+pytz==2026.4
+scikit-learn==1.7.2
+scipy==1.15.3
+semver==3.1.0
+six==1.17.0
+sympy==1.14.0
+threadpoolctl==3.7.0
+tomli==2.4.1
+tomlkit==0.15.1
+typing_extensions==4.16.0
+tzdata==2026.4

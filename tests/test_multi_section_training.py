@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import json
 
 import pytest
+from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.linear_model import LinearRegression
 
 from project1.experiments.benchmark_data import (
@@ -21,9 +22,18 @@ from project1.experiments.model_partitioning import (
     radial_partition,
     workline_partition,
 )
+from project1.modeling.factory import build_3d_models
 
 
 FIXTURE_ROOT = Path(__file__).parent / "fixtures" / "institute_four"
+
+
+class AlwaysFailRegressor(RegressorMixin, BaseEstimator):
+    def fit(self, x, y):
+        raise RuntimeError("intentional model failure")
+
+    def predict(self, x):
+        raise RuntimeError("unreachable")
 
 
 def test_training_config_uses_dynamic_targets_with_strict_structural_checks():
@@ -270,6 +280,12 @@ def test_multi_training_reuses_runner_and_saves_section_aware_metadata(
         ("CMP:S1:RO", "Cpt"),
     }
     assert {row["model_dimension"] for row in manifest} == {dimension}
+    leaderboard = json.loads(Path(result["leaderboard_path"]).read_text(encoding="utf-8"))
+    split_modes = {row["split_mode"] for row in leaderboard}
+    if dimension == "3D":
+        assert "condition" in split_modes
+    else:
+        assert "condition" not in split_modes
     target_plan = json.loads(Path(result["target_plan_path"]).read_text(encoding="utf-8"))
     assert {(row["partition"], tuple(row["selected_targets"])) for row in target_plan} == {
         ("CMP:S1:RI", ("Alpha",)),
@@ -319,3 +335,313 @@ def test_single_section_runner_keeps_existing_partition_path(
     assert {row["section"] for row in manifest} == {None}
     assert (output / model_dir / "CMP_S1" / "linear_Cpt.pkl").exists()
     assert not (output / model_dir / "CMP_S1_None").exists()
+
+
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
+def test_phase_2a1_models_run_through_direct_3d_benchmark(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    samples: list[FlexSample] = []
+    for condition in range(4):
+        for xi in (0.0, 1.0):
+            sample = _sample(
+                section=None,
+                outputs={"Cpt": 1.0 + condition * 0.1 + xi * 0.05},
+                source_file=f"condition_{condition}.dat",
+            )
+            sample.speed_parameter = 0.7 + condition * 0.1
+            sample.flow_parameter = 10.0 + condition
+            sample.xi = xi
+            samples.append(sample)
+    models = build_3d_models(include_gpr=True)
+    phase_models = {
+        name: models[name]
+        for name in ("kernel_ridge_rbf", "extra_trees", "ard_gpr")
+    }
+    monkeypatch.setattr(
+        "project1.experiments.benchmark_runners.load_training_samples",
+        lambda input_dir, radial_mode: samples,
+    )
+    monkeypatch.setattr(
+        "project1.experiments.benchmark_runners._build_models",
+        lambda include_gpr: phase_models,
+    )
+
+    result = run_benchmark(
+        input_dir=str(tmp_path / "unused"),
+        output_dir=str(tmp_path / "output"),
+        radial_mode="full",
+        include_gpr=True,
+        max_samples=100,
+        partition_mode="multi",
+        n_splits=2,
+    )
+
+    manifest = json.loads(Path(result["models_manifest_path"]).read_text(encoding="utf-8"))
+    leaderboard = json.loads(Path(result["leaderboard_path"]).read_text(encoding="utf-8"))
+    assert result["model_count"] == 3
+    assert {row["model"] for row in manifest} == set(phase_models)
+    assert {
+        row["model"] for row in leaderboard if row["split_mode"] == "condition"
+    } == set(phase_models)
+
+
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
+def test_remaining_phase_2a_models_run_through_direct_3d_benchmark(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    for dependency in ("pygam", "interpret", "catboost", "ngboost"):
+        pytest.importorskip(dependency)
+    samples: list[FlexSample] = []
+    for condition in range(6):
+        for xi in (0.0, 0.5, 1.0):
+            sample = _sample(
+                section=None,
+                outputs={"Cpt": 1.0 + condition * 0.1 + xi * 0.05},
+                source_file=f"condition_{condition}.dat",
+            )
+            sample.speed_parameter = 0.7 + condition * 0.05
+            sample.flow_parameter = 10.0 + condition
+            sample.xi = xi
+            samples.append(sample)
+    models = build_3d_models(include_gpr=False)
+    models["gam"].set_params(
+        lazyimportregressor__model_kwargs={"n_splines": 5, "max_iter": 20}
+    )
+    models["catboost"].set_params(
+        model_kwargs={
+            "iterations": 10,
+            "depth": 3,
+            "random_seed": 42,
+            "verbose": False,
+            "allow_writing_files": False,
+            "thread_count": 1,
+        }
+    )
+    models["ebm"].set_params(
+        model_kwargs={
+            "interactions": 0,
+            "max_rounds": 20,
+            "outer_bags": 1,
+            "early_stopping_rounds": 5,
+            "random_state": 42,
+            "n_jobs": 1,
+        }
+    )
+    models["ngboost"].set_params(
+        model_kwargs={
+            "n_estimators": 10,
+            "learning_rate": 0.05,
+            "random_state": 42,
+            "verbose": False,
+        }
+    )
+    models["mlp"].set_params(
+        mlpregressor__hidden_layer_sizes=(8,),
+        mlpregressor__max_iter=50,
+    )
+    phase_models = {
+        name: models[name]
+        for name in ("gam", "catboost", "ebm", "ngboost", "mlp")
+    }
+    monkeypatch.setattr(
+        "project1.experiments.benchmark_runners.load_training_samples",
+        lambda input_dir, radial_mode: samples,
+    )
+    monkeypatch.setattr(
+        "project1.experiments.benchmark_runners._build_models",
+        lambda include_gpr: phase_models,
+    )
+
+    result = run_benchmark(
+        input_dir=str(tmp_path / "unused"),
+        output_dir=str(tmp_path / "output"),
+        radial_mode="full",
+        include_gpr=False,
+        max_samples=100,
+        partition_mode="multi",
+        n_splits=2,
+    )
+
+    manifest = json.loads(Path(result["models_manifest_path"]).read_text(encoding="utf-8"))
+    leaderboard = json.loads(Path(result["leaderboard_path"]).read_text(encoding="utf-8"))
+    assert result["model_count"] == 5
+    assert {row["model"] for row in manifest} == set(phase_models)
+    assert {
+        row["model"] for row in leaderboard if row["split_mode"] == "condition"
+    } == set(phase_models)
+
+
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+def test_phase_2b_models_run_through_direct_3d_benchmark(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    pytest.importorskip("pytabkit")
+    pytest.importorskip("kan")
+    samples: list[FlexSample] = []
+    for condition in range(6):
+        for xi in (0.0, 0.5, 1.0):
+            sample = _sample(
+                outputs={"Cpt": 1.0 + condition * 0.1 + xi * 0.05},
+                source_file=f"condition_{condition}.dat",
+            )
+            sample.speed_parameter = 0.7 + condition * 0.05
+            sample.flow_parameter = 10.0 + condition
+            sample.xi = xi
+            samples.append(sample)
+    models = build_3d_models(include_gpr=False)
+    models["realmlp"].set_params(model_kwargs={"n_epochs": 1, "batch_size": 16, "n_threads": 1, "random_state": 42, "device": "cpu", "verbosity": 0})
+    models["tabm"].set_params(model_kwargs={"n_epochs": 1, "batch_size": 16, "tabm_k": 4, "d_block": 32, "n_blocks": 2, "compile_model": False, "n_threads": 1, "random_state": 42, "device": "cpu", "verbosity": 0})
+    models["resnet_mlp"].set_params(model_kwargs={"max_epochs": 1, "batch_size": 16, "module_d": 32, "module_n_layers": 2, "n_threads": 1, "random_state": 42, "device": "cpu", "verbosity": 0})
+    models["ft_transformer"].set_params(model_kwargs={"max_epochs": 1, "batch_size": 16, "module_d_token": 32, "module_n_layers": 2, "module_n_heads": 4, "n_threads": 1, "random_state": 42, "device": "cpu", "verbosity": 0})
+    models["original_kan"].set_params(pykanregressor__hidden_width=8, pykanregressor__steps=1)
+    phase_models = {
+        name: models[name]
+        for name in ("realmlp", "tabm", "original_kan", "resnet_mlp", "ft_transformer")
+    }
+    monkeypatch.setattr(
+        "project1.experiments.benchmark_runners.load_training_samples",
+        lambda input_dir, radial_mode: samples,
+    )
+    monkeypatch.setattr(
+        "project1.experiments.benchmark_runners._build_models",
+        lambda include_gpr: phase_models,
+    )
+    monkeypatch.setattr(
+        "project1.experiments.benchmark_runners.cv_splits",
+        lambda rows, mode, n_splits: [(list(range(12)), list(range(12, 18)))] if mode == "condition" else [],
+    )
+
+    result = run_benchmark(
+        input_dir=str(tmp_path / "unused"),
+        output_dir=str(tmp_path / "output"),
+        radial_mode="full",
+        include_gpr=False,
+        max_samples=100,
+        partition_mode="multi",
+        n_splits=2,
+    )
+
+    manifest = json.loads(Path(result["models_manifest_path"]).read_text(encoding="utf-8"))
+    leaderboard = json.loads(Path(result["leaderboard_path"]).read_text(encoding="utf-8"))
+    assert result["failure_count"] == 0
+    assert {row["model"] for row in manifest} == set(phase_models)
+    assert {row["model"] for row in leaderboard} == set(phase_models)
+
+
+def test_tabiclv2_runs_through_direct_3d_benchmark_from_offline_cache(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    pytest.importorskip("tabicl")
+    hub = pytest.importorskip("huggingface_hub")
+    checkpoint = hub.try_to_load_from_cache(
+        "jingang/TabICL", "tabicl-regressor-v2-20260212.ckpt"
+    )
+    if not isinstance(checkpoint, str):
+        pytest.skip("TabICLv2 regression checkpoint is not cached")
+    samples: list[FlexSample] = []
+    for condition in range(6):
+        for xi in (0.0, 0.5, 1.0):
+            sample = _sample(
+                outputs={"Cpt": 1.0 + condition * 0.1 + xi * 0.05},
+                source_file=f"condition_{condition}.dat",
+            )
+            sample.speed_parameter = 0.7 + condition * 0.05
+            sample.flow_parameter = 10.0 + condition
+            sample.xi = xi
+            samples.append(sample)
+    model = build_3d_models(include_gpr=False)["tabiclv2"]
+    model.set_params(
+        model_kwargs={
+            "n_estimators": 1,
+            "batch_size": 1,
+            "device": "cpu",
+            "use_amp": False,
+            "use_fa3": False,
+            "offload_mode": False,
+            "allow_auto_download": False,
+            "random_state": 42,
+            "n_jobs": 1,
+            "verbose": False,
+        }
+    )
+    monkeypatch.setattr(
+        "project1.experiments.benchmark_runners.load_training_samples",
+        lambda input_dir, radial_mode: samples,
+    )
+    monkeypatch.setattr(
+        "project1.experiments.benchmark_runners._build_models",
+        lambda include_gpr: {"tabiclv2": model},
+    )
+    monkeypatch.setattr(
+        "project1.experiments.benchmark_runners.cv_splits",
+        lambda rows, mode, n_splits: [(list(range(12)), list(range(12, 18)))] if mode == "condition" else [],
+    )
+
+    result = run_benchmark(
+        input_dir=str(tmp_path / "unused"),
+        output_dir=str(tmp_path / "output"),
+        radial_mode="full",
+        include_gpr=False,
+        max_samples=100,
+        partition_mode="multi",
+        n_splits=2,
+    )
+
+    manifest = json.loads(Path(result["models_manifest_path"]).read_text(encoding="utf-8"))
+    leaderboard = json.loads(Path(result["leaderboard_path"]).read_text(encoding="utf-8"))
+    assert result["failure_count"] == 0
+    assert {row["model"] for row in manifest} == {"tabiclv2"}
+    assert {row["model"] for row in leaderboard} == {"tabiclv2"}
+
+
+def test_direct_3d_benchmark_records_model_failures_without_stopping(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    samples = []
+    for condition in range(4):
+        for xi in (0.0, 1.0):
+            sample = _sample(
+                outputs={"Cpt": 1.0 + condition * 0.1 + xi * 0.05},
+                source_file=f"condition_{condition}.dat",
+            )
+            sample.speed_parameter = 0.7 + condition * 0.1
+            sample.flow_parameter = 10.0 + condition
+            sample.xi = xi
+            samples.append(sample)
+    monkeypatch.setattr(
+        "project1.experiments.benchmark_runners.load_training_samples",
+        lambda input_dir, radial_mode: samples,
+    )
+    monkeypatch.setattr(
+        "project1.experiments.benchmark_runners._build_models",
+        lambda include_gpr: {"linear": LinearRegression(), "broken": AlwaysFailRegressor()},
+    )
+    monkeypatch.setattr(
+        "project1.experiments.benchmark_runners.cv_splits",
+        lambda rows, mode, n_splits: [(list(range(4)), list(range(4, 8)))] if mode == "condition" else [],
+    )
+
+    result = run_benchmark(
+        input_dir=str(tmp_path / "unused"),
+        output_dir=str(tmp_path / "output"),
+        radial_mode="full",
+        include_gpr=False,
+        max_samples=100,
+        partition_mode="multi",
+        n_splits=2,
+    )
+
+    failures = json.loads(Path(result["failures_path"]).read_text(encoding="utf-8"))
+    leaderboard = json.loads(Path(result["leaderboard_path"]).read_text(encoding="utf-8"))
+    manifest = json.loads(Path(result["models_manifest_path"]).read_text(encoding="utf-8"))
+    assert failures
+    assert {"model_key", "status", "exception_type", "reason", "stage"} <= failures[0].keys()
+    assert all(row["model_key"] == "broken" for row in failures)
+    assert {row["model"] for row in leaderboard} == {"linear"}
+    assert {row["model"] for row in manifest} == {"linear"}

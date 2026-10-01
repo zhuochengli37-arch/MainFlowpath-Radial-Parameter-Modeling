@@ -19,6 +19,7 @@ _WORKFLOW_MODULES: dict[str, str] = {
     "current_predict_2d": "workbase.current_scripts.predict_2d",
     "current_benchmark_3d": "workbase.current_scripts.benchmark_3d",
     "current_predict_3d": "workbase.current_scripts.predict_3d",
+    "current_direct_3d": "workbase.current_scripts.direct_3d",
     "generic_benchmark_1d": "workbase.generic_scripts.generic_benchmark_1d",
     "generic_predict_1d": "workbase.generic_scripts.generic_predict_1d",
     "generic_benchmark_2d": "workbase.generic_scripts.generic_benchmark_2d",

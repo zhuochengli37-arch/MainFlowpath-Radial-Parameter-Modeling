@@ -14,7 +14,9 @@ from project1.experiments.benchmark_data import (
     schema_input_type,
 )
 from project1.experiments.benchmark_partitioning import (
+    condition_group_labels,
     cv_splits,
+    limit_samples_by_condition,
     metrics,
     partition_samples,
     prepare_model_for_fold,
@@ -36,6 +38,19 @@ from workbase.common.model_versioning import create_model_metadata, save_model_w
 
 def _build_models(include_gpr: bool = True) -> dict[str, object]:
     return build_3d_models(include_gpr=include_gpr)
+
+
+def _build_2d_models(include_gpr: bool = True) -> dict[str, object]:
+    direct_3d_only = {
+        "kernel_ridge_rbf", "extra_trees", "ard_gpr", "gam", "catboost", "ebm",
+        "ngboost", "mlp", "realmlp", "tabm", "original_kan", "resnet_mlp",
+        "ft_transformer", "tabiclv2", "pysr", "tabpfn",
+    }
+    return {
+        name: model
+        for name, model in _build_models(include_gpr=include_gpr).items()
+        if name not in direct_3d_only
+    }
 
 
 def _resolve_target_plans(
@@ -125,9 +140,7 @@ def run_benchmark(
     if len(samples) < 8:
         raise ValueError("not enough usable samples for benchmark")
     if len(samples) > max_samples:
-        rng = np.random.default_rng(42)
-        idx = rng.choice(np.arange(len(samples)), size=max_samples, replace=False)
-        samples = [samples[i] for i in sorted(idx)]
+        samples = limit_samples_by_condition(samples, max_samples, random_state=42)
     print(f"Loaded {len(samples)} samples")
 
     output = Path(output_dir)
@@ -137,8 +150,9 @@ def run_benchmark(
     models = _build_models(include_gpr=include_gpr)
     print(f"Loaded {len(models)} models")
 
-    split_modes = ("random", "rpm", "wcor")
+    split_modes = ("condition", "random", "rpm", "wcor")
     rows: list[dict[str, object]] = []
+    failures: list[dict[str, object]] = []
 
     print("\n[3/7] Partitioning data...")
     partitions = partition_samples(samples, partition_mode)
@@ -175,22 +189,68 @@ def run_benchmark(
                         continue
                     for name, model in models.items():
                         fold_metrics: list[dict[str, float]] = []
-                        for train_idx, test_idx in splits:
+                        failed = False
+                        for fold, (train_idx, test_idx) in enumerate(splits):
                             if len(test_idx) == 0 or len(train_idx) == 0:
                                 continue
                             x_train, y_train = x[train_idx], y[train_idx]
                             x_test, y_test = x[test_idx], y[test_idx]
-                            if name == "gpr_matern" and len(train_idx) > 800:
-                                rng = np.random.default_rng(42)
-                                selected = rng.choice(train_idx, size=800, replace=False)
+                            if name in {"gpr_matern", "ard_gpr"} and len(train_idx) > 800:
+                                train_samples = [target_samples[index] for index in train_idx]
+                                limited_samples = limit_samples_by_condition(
+                                    train_samples, 800, random_state=42
+                                )
+                                selected_ids = {id(sample) for sample in limited_samples}
+                                selected = np.array(
+                                    [index for index in train_idx if id(target_samples[index]) in selected_ids]
+                                )
                                 x_train, y_train = x[selected], y[selected]
+                            stage = "factory"
                             try:
                                 candidate = prepare_model_for_fold(model, len(train_idx))
+                                if name in {"pysr", "tabpfn"}:
+                                    condition_ids = condition_group_labels(target_samples)
+                                    candidate.set_run_context(
+                                        partition=str(partition_key),
+                                        target=target,
+                                        split_mode=split_mode,
+                                        fold=fold,
+                                        train_condition_ids=condition_ids[train_idx].tolist(),
+                                        feature_order=["n", "w", "xi"],
+                                    )
+                                stage = "fit"
                                 candidate.fit(x_train, y_train)
+                                if name in {"pysr", "tabpfn"}:
+                                    candidate.set_prediction_context(
+                                        partition=str(partition_key),
+                                        target=target,
+                                        split_mode=split_mode,
+                                        fold=fold,
+                                        condition_ids=condition_ids[test_idx].tolist(),
+                                    )
+                                stage = "predict"
                                 pred = candidate.predict(x_test)
-                            except Exception:
-                                continue
-                            fold_metrics.append(metrics(y_test, pred))
+                                stage = "metric"
+                                fold_metrics.append(metrics(y_test, pred))
+                            except Exception as exc:
+                                failures.append(
+                                    {
+                                        "model_key": name,
+                                        "status": "failed",
+                                        "exception_type": type(exc).__name__,
+                                        "reason": str(exc) or repr(exc),
+                                        "stage": stage,
+                                        "partition": partition_key,
+                                        "target": target,
+                                        "split_mode": split_mode,
+                                        "fold": fold,
+                                    }
+                                )
+                                failed = True
+                                break
+                        if failed:
+                            pbar.update(1)
+                            continue
                         if not fold_metrics:
                             continue
                         completed_work += 1
@@ -239,9 +299,43 @@ def run_benchmark(
             if len(target_samples) < 2:
                 continue
             for name, model in models.items():
+                stage = "factory"
                 try:
                     final_model = prepare_model_for_fold(model, len(x))
+                    if name in {"pysr", "tabpfn"}:
+                        final_model.set_run_context(
+                            partition=str(partition_key),
+                            target=target,
+                            split_mode="full_training_data",
+                            fold=None,
+                            train_condition_ids=condition_group_labels(target_samples).tolist(),
+                            feature_order=["n", "w", "xi"],
+                        )
+                    stage = "fit"
                     final_model.fit(x, y)
+                    symbolic_info = getattr(final_model, "symbolic_report_", None)
+                    foundation_info = getattr(final_model, "foundation_report_", None)
+                    if name in {"pysr", "tabpfn"}:
+                        final_model.set_prediction_context(
+                            partition=str(partition_key),
+                            target=target,
+                            split_mode="artifact_check",
+                            fold=None,
+                            condition_ids=condition_group_labels(target_samples[:1]).tolist(),
+                        )
+                        stage = "predict"
+                        final_model.predict(x[:1])
+                        foundation_info = getattr(final_model, "foundation_report_", None)
+                    if name == "pysr":
+                        symbolic_info = final_model.symbolic_report_
+                        for row in rows:
+                            if (
+                                row["partition"] == partition_key
+                                and row["target"] == target
+                                and row["model"] == name
+                            ):
+                                row["selected_equation"] = symbolic_info["selected_equation"]
+                                row["selected_complexity"] = symbolic_info["selected_complexity"]
                     best_result = next(
                         (
                             row
@@ -249,7 +343,7 @@ def run_benchmark(
                             if row["partition"] == partition_key
                             and row["target"] == target
                             and row["model"] == name
-                            and row["split_mode"] == "random"
+                            and row["split_mode"] == "condition"
                         ),
                         None,
                     )
@@ -292,10 +386,13 @@ def run_benchmark(
                         additional_info={
                             "component": subset[0].component if subset else None,
                             "model_category": MODEL_CATEGORY.get(name, "other"),
+                            **({"symbolic_model": symbolic_info} if symbolic_info else {}),
+                            **({"foundation_model": foundation_info} if foundation_info else {}),
                         },
                         model_context=model_context,
                     )
                     model_path = partition_models_dir / f"{name}_{target}.pkl"
+                    stage = "save"
                     save_model_with_metadata(final_model, model_path, metadata)
                     saved_models_info.append(
                         {
@@ -305,13 +402,35 @@ def run_benchmark(
                             "train_samples": len(target_samples),
                             "sample_count": len(target_samples),
                             "metrics": metrics_payload,
+                            **({"symbolic_model": symbolic_info} if symbolic_info else {}),
+                            **({"foundation_model": foundation_info} if foundation_info else {}),
                         }
                     )
-                except Exception:
-                    continue
+                except Exception as exc:
+                    failures.append(
+                        {
+                            "model_key": name,
+                            "status": "failed",
+                            "exception_type": type(exc).__name__,
+                            "reason": str(exc) or repr(exc),
+                            "stage": stage,
+                            "partition": partition_key,
+                            "target": target,
+                        }
+                    )
+                    rows[:] = [
+                        row for row in rows
+                        if not (
+                            row["partition"] == partition_key
+                            and row["target"] == target
+                            and row["model"] == name
+                        )
+                    ]
 
     models_manifest_path = models_dir / "models_manifest.json"
     models_manifest_path.write_text(json.dumps(saved_models_info, ensure_ascii=False, indent=2), encoding="utf-8")
+    failures_path = output / "benchmark_failures_3d.json"
+    failures_path.write_text(json.dumps(failures, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print("\n[6/7] Writing leaderboard...")
     leaderboard = sorted(rows, key=lambda item: (item["partition"], item["target"], item["split_mode"], item["rmse"]))
@@ -362,6 +481,8 @@ def run_benchmark(
         "report_path": str(report_path),
         "models_dir": str(models_dir),
         "models_manifest_path": str(models_manifest_path),
+        "failures_path": str(failures_path),
+        "failure_count": len(failures),
         "target_plan_path": str(target_plan_path),
         "completed_work": completed_work,
     }
@@ -394,7 +515,7 @@ def run_benchmark_2d(
     output.mkdir(parents=True, exist_ok=True)
 
     print("\n[2/7] Building model candidates...")
-    models = _build_models(include_gpr=include_gpr)
+    models = _build_2d_models(include_gpr=include_gpr)
     print(f"Loaded {len(models)} models")
 
     split_modes = ("random", "rpm")

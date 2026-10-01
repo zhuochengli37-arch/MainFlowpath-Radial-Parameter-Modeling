@@ -1,0 +1,114 @@
+{
+  "protocol_version": "v1",
+  "status": "preflight_closed_before_real_benchmark",
+  "revision_policy": "one_uniform_revision_allowed_before_real_benchmark; immutable_after_start; never_result_driven",
+  "allowed_stochasticity_types": [
+    "deterministic",
+    "stochastic",
+    "search_stochastic"
+  ],
+  "data_split": {
+    "mode": "condition_level",
+    "condition_key": "(n,w) or the validated explicit condition/state ID",
+    "all_xi_points_stay_together": true,
+    "point_level_random_split": "prohibited",
+    "split_seed": 42,
+    "fixed_within_repeat_group": true
+  },
+  "repeat_rule": "fix data split and change only model_seed or search_seed",
+  "change_split_and_model_seed_together": "prohibited",
+  "fixed_seeds": {
+    "initial_screening": [42, 2026, 3407],
+    "representative_comparison": [42, 2026, 3407, 1234, 5678]
+  },
+  "initial_screening": {
+    "deterministic": {"runs": 1, "seeds": [42]},
+    "stochastic": {"runs": 3, "seeds_ref": "fixed_seeds.initial_screening"},
+    "search_stochastic": {"runs": 3, "seeds_ref": "fixed_seeds.initial_screening"}
+  },
+  "representative_comparison": {
+    "deterministic": {"runs": 1, "seeds": [42]},
+    "stochastic": {"runs": 5, "seeds_ref": "fixed_seeds.representative_comparison"},
+    "search_stochastic": {
+      "runs": 3,
+      "seeds": [42, 2026, 3407],
+      "conditional_extension_to_5": {
+        "allowed": true,
+        "additional_seeds": [1234, 5678],
+        "conditions": [
+          "PySR passes screening",
+          "PySR is designated a primary paper representative",
+          "real-CFD compute resources permit five runs",
+          "the decision is frozen before Representative Model Comparison starts"
+        ],
+        "result_driven_change": "prohibited"
+      }
+    }
+  },
+  "aggregation": {
+    "metrics": ["RMSE", "MAE", "MAPE", "R2", "NRMSE_range"],
+    "statistics": ["mean", "sample_std"],
+    "retain_every_run": true,
+    "best_run_as_official_result": "prohibited"
+  },
+  "pysr": {
+    "stochasticity_type": "search_stochastic",
+    "change_between_runs": "search_seed_only",
+    "fixed_between_runs": [
+      "operators",
+      "maxsize",
+      "maxdepth",
+      "search_budget",
+      "timeout",
+      "complexity_rule",
+      "selection_rule"
+    ],
+    "record_each_expression_and_metrics": true,
+    "select_lowest_error_expression_across_runs": "prohibited"
+  },
+  "model_classification": {
+    "linear_deg2": {"stochasticity_type": "deterministic", "basis": "closed-form linear regression"},
+    "ridge_deg2": {"stochasticity_type": "deterministic", "basis": "deterministic ridge regression"},
+    "piecewise_ridge": {"stochasticity_type": "deterministic", "basis": "deterministic median partition and ridge fits"},
+    "spline_regression": {"stochasticity_type": "deterministic", "basis": "deterministic spline transform and ridge fit"},
+    "tensor_spline": {"stochasticity_type": "deterministic", "basis": "deterministic basis transforms and ridge fit"},
+    "lasso": {"stochasticity_type": "deterministic", "basis": "current coordinate-descent configuration has no random selection"},
+    "elastic_net": {"stochasticity_type": "deterministic", "basis": "current coordinate-descent configuration has no random selection"},
+    "gam": {"stochasticity_type": "deterministic", "basis": "current LinearGAM configuration has no random sampling"},
+    "ebm": {"stochasticity_type": "stochastic", "basis": "outer_bags=8 with random_state"},
+    "lowess_like": {"stochasticity_type": "deterministic", "basis": "direct distance-weighted implementation"},
+    "knn_distance": {"stochasticity_type": "deterministic", "basis": "fixed nearest-neighbor query"},
+    "rbf": {"stochasticity_type": "deterministic", "basis": "direct scipy RBFInterpolator fit"},
+    "svr_rbf": {"stochasticity_type": "deterministic", "basis": "current SVR configuration has no probabilistic training step"},
+    "gpr_matern": {"stochasticity_type": "deterministic", "basis": "GaussianProcessRegressor with zero optimizer restarts"},
+    "kernel_ridge_rbf": {"stochasticity_type": "deterministic", "basis": "deterministic kernel ridge solution"},
+    "ard_gpr": {"stochasticity_type": "deterministic", "basis": "GaussianProcessRegressor with zero optimizer restarts"},
+    "random_forest": {"stochasticity_type": "stochastic", "basis": "bootstrap/tree sampling with random_state"},
+    "gradient_boosting": {"stochasticity_type": "stochastic", "basis": "sklearn split-feature permutation is controlled by random_state"},
+    "xgboost": {"stochasticity_type": "deterministic", "basis": "current factory uses full row and feature sampling"},
+    "lightgbm": {"stochasticity_type": "deterministic", "basis": "current factory leaves bagging and feature subsampling inactive"},
+    "extra_trees": {"stochasticity_type": "stochastic", "basis": "randomized split thresholds with random_state"},
+    "catboost": {"stochasticity_type": "stochastic", "basis": "native training randomization remains active and random_seed is configured"},
+    "ngboost": {"stochasticity_type": "stochastic", "basis": "RNG-controlled boosting sampling with random_state"},
+    "mlp": {"stochasticity_type": "stochastic", "basis": "random initialization and Adam optimization"},
+    "realmlp": {"stochasticity_type": "stochastic", "basis": "random initialization and minibatch neural training"},
+    "tabm": {"stochasticity_type": "stochastic", "basis": "random initialization and minibatch neural training"},
+    "original_kan": {"stochasticity_type": "stochastic", "basis": "pykan initialization is controlled by seed"},
+    "resnet_mlp": {"stochasticity_type": "stochastic", "basis": "random initialization and minibatch neural training"},
+    "ft_transformer": {"stochasticity_type": "stochastic", "basis": "random initialization and minibatch neural training"},
+    "tabpfn": {
+      "stochasticity_type": "stochastic",
+      "basis": "Phase 5D verified that random_state reaches official ensemble/preprocessing configuration and changes validation/test predictions",
+      "evidence": "data/output/benchmark/preflight/foundation_model_stochasticity_check.json"
+    },
+    "tabiclv2": {
+      "stochasticity_type": "stochastic",
+      "basis": "Phase 5D verified that random_state reaches the official estimator and EnsembleGenerator and changes validation/test predictions",
+      "evidence": "data/output/benchmark/preflight/foundation_model_stochasticity_check.json"
+    },
+    "hierarchical_workline": {"stochasticity_type": "deterministic", "basis": "deterministic polynomial ridge stages"},
+    "endpoint_hub_tip": {"stochasticity_type": "deterministic", "basis": "deterministic endpoint partitions and ridge fits"},
+    "physics_clamped_ridge": {"stochasticity_type": "deterministic", "basis": "deterministic ridge fit and clipping"},
+    "pysr": {"stochasticity_type": "search_stochastic", "basis": "randomized symbolic search controlled by search seed"}
+  }
+}

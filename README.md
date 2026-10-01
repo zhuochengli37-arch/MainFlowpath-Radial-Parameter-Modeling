@@ -62,12 +62,17 @@ Canonical结果；最终研究所宽表重组及1D串联workflow尚未接入。
 
 对应的统一入口是：
 
+- `python -m project1 current direct-3d`（依次完成3D训练与预测）
 - `python -m project1 current benchmark-1d`
 - `python -m project1 current predict-1d`
 - `python -m project1 current benchmark-2d`
 - `python -m project1 current predict-2d`
 - `python -m project1 current benchmark-3d`
 - `python -m project1 current predict-3d`
+
+`direct-3d`复用`benchmark_3d`和`predict_3d`配置依次完成训练与预测。Multi-Section
+结果按预测输入的相对路径写回宽表，同时保留`canonical_prediction_results_3d.json`
+用于追溯模型与来源行。
 
 ## 通用工作流
 

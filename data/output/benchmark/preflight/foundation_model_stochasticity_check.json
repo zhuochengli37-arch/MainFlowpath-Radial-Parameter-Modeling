@@ -1,0 +1,103 @@
+{
+  "phase": "5D",
+  "status": "PASS",
+  "purpose": "foundation_model_stochasticity_preflight_only",
+  "dataset": {
+    "component": "CMP",
+    "stage": 1,
+    "section": "RI",
+    "target": "Cpt",
+    "feature_order": ["n", "w", "xi"],
+    "sample_count": 220
+  },
+  "split": {
+    "source": "data/output/phase4b_validation/split_manifest.json",
+    "sha256": "36a809faf85b5bb52256b2fd2fd22ad93a4de820128e6bd2e343c6af07f227b8",
+    "reused_without_repartitioning": true,
+    "sample_counts": {
+      "train": 132,
+      "validation": 44,
+      "test": 44
+    }
+  },
+  "seeds": [42, 2026, 3407],
+  "non_seed_model_parameters_changed": false,
+  "accuracy_comparison_or_ranking_performed": false,
+  "models": [
+    {
+      "model_key": "tabpfn",
+      "configuration": {
+        "n_estimators": 1,
+        "checkpoint": "tabpfn-v3.5-fast-20260909.safetensors",
+        "seed_path": "ExternalTabPFNRegressor.random_state -> runner configuration -> official TabPFNRegressor.random_state",
+        "seed_controls": "official ensemble and preprocessing configuration generation"
+      },
+      "seed_delivery_verified": {
+        "42": {"wrapper": 42, "runner_configuration": 42},
+        "2026": {"wrapper": 2026, "runner_configuration": 2026},
+        "3407": {"wrapper": 3407, "runner_configuration": 3407}
+      },
+      "prediction_pairs": [
+        {
+          "prediction_pair": "42_vs_2026",
+          "validation": {"max_abs_diff": 0.006082296371459961, "mean_abs_diff": 0.001310440627011386},
+          "test": {"max_abs_diff": 0.002747774124145508, "mean_abs_diff": 0.0010470151901245117}
+        },
+        {
+          "prediction_pair": "42_vs_3407",
+          "validation": {"max_abs_diff": 0.0035990476608276367, "mean_abs_diff": 0.0009526989676735618},
+          "test": {"max_abs_diff": 0.0031245946884155273, "mean_abs_diff": 0.0012820308858698065}
+        },
+        {
+          "prediction_pair": "2026_vs_3407",
+          "validation": {"max_abs_diff": 0.002800464630126953, "mean_abs_diff": 0.0007045539942654697},
+          "test": {"max_abs_diff": 0.0015746355056762695, "mean_abs_diff": 0.00048704038966785777}
+        }
+      ],
+      "overall_max_abs_diff": 0.006082296371459961,
+      "all_prediction_shapes": [44],
+      "all_predictions_finite": true,
+      "classification": "stochastic",
+      "evidence": "The seed reached the official implementation and changing only the seed changed validation and test predictions.",
+      "status": "PASS"
+    },
+    {
+      "model_key": "tabiclv2",
+      "configuration": {
+        "n_estimators": 8,
+        "checkpoint": "tabicl-regressor-v2-20260212.ckpt",
+        "feature_shuffle_method": "latin",
+        "seed_path": "LazyImportRegressor.model_kwargs.random_state -> official TabICLRegressor.random_state -> EnsembleGenerator.random_state",
+        "seed_controls": "official ensemble feature permutations and randomized preprocessing"
+      },
+      "seed_delivery_verified": {
+        "42": {"wrapper_model_kwargs": 42, "official_estimator": 42, "ensemble_generator": 42},
+        "2026": {"wrapper_model_kwargs": 2026, "official_estimator": 2026, "ensemble_generator": 2026},
+        "3407": {"wrapper_model_kwargs": 3407, "official_estimator": 3407, "ensemble_generator": 3407}
+      },
+      "prediction_pairs": [
+        {
+          "prediction_pair": "42_vs_2026",
+          "validation": {"max_abs_diff": 0.0035696029663085938, "mean_abs_diff": 0.000591443343596025},
+          "test": {"max_abs_diff": 0.0016831159591674805, "mean_abs_diff": 0.0004998635162006725}
+        },
+        {
+          "prediction_pair": "42_vs_3407",
+          "validation": {"max_abs_diff": 0.0035697221755981445, "mean_abs_diff": 0.000591443343596025},
+          "test": {"max_abs_diff": 0.0016832351684570312, "mean_abs_diff": 0.0004998851906169544}
+        },
+        {
+          "prediction_pair": "2026_vs_3407",
+          "validation": {"max_abs_diff": 2.384185791015625e-7, "mean_abs_diff": 4.8767436634410514e-8},
+          "test": {"max_abs_diff": 2.384185791015625e-7, "mean_abs_diff": 3.251162442294034e-8}
+        }
+      ],
+      "overall_max_abs_diff": 0.0035697221755981445,
+      "all_prediction_shapes": [44],
+      "all_predictions_finite": true,
+      "classification": "stochastic",
+      "evidence": "The seed reached the official implementation and changing only the seed changed validation and test predictions.",
+      "status": "PASS"
+    }
+  ]
+}

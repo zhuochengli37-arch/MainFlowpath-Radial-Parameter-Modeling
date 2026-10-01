@@ -144,6 +144,33 @@ def test_prediction_loader_unifies_multi_sections_and_excludes_boundaries():
     assert all("station is not MAIN" in item.reason for item in batch.exclusions)
 
 
+def test_prediction_loader_rejects_duplicate_section_aliases(tmp_path: Path):
+    source = tmp_path / "DATABASE_CMP" / "STAGE_1" / "CNC_0.9" / "W25COR_0.512.dat"
+    source.parent.mkdir(parents=True)
+    source.write_text(
+        "xi_RI Cpt_RI xi_rotor_inlet Cpt_rotor_inlet\n"
+        "0.0 1.0 0.0 1.0\n",
+        encoding="utf-8",
+    )
+
+    batch = load_prediction_batch(source, require_flow=True)
+
+    assert not batch.samples
+    assert len(batch.exclusions) == 1
+    assert "duplicate section 'RI'" in batch.exclusions[0].reason
+
+
+def test_multi_section_prediction_preserves_source_row_indices(tmp_path: Path):
+    source = tmp_path / "DATABASE_CMP" / "STAGE_1" / "CNC_0.9" / "W25COR_0.512.csv"
+    source.parent.mkdir(parents=True)
+    source.write_text("xi_A,Cpt_A\n0.0,1.0\n,\n1.0,2.0\n", encoding="utf-8")
+
+    samples = load_prediction_batch(source, require_flow=True).samples
+
+    assert [sample.row_index for sample in samples] == [0, 2]
+    assert [sample.section_row_index for sample in samples] == [0, 1]
+
+
 def test_file_loader_content_flow_has_priority_over_numeric_filename(tmp_path: Path):
     source = tmp_path / "DATABASE_CMP" / "STAGE_1" / "CNC_0.9" / "0.01509.txt"
     source.parent.mkdir(parents=True)
@@ -534,3 +561,54 @@ def test_legacy_single_3d_wrapper_keeps_output_and_structured_flow(
     assert expected.exists()
     assert len(results) == 2
     assert all(result.predicted_value == pytest.approx(0.512) for result in results)
+
+
+def test_direct_3d_writes_multi_section_wide_table_with_unequal_xi(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    import workbase.current_scripts.predict_3d as wrapper
+    from project1.services.data_reader import read_tabular_file
+
+    source = tmp_path / "input" / "DATABASE_CMP" / "STAGE_1" / "CNC_0.9" / "W25COR_0.512.csv"
+    source.parent.mkdir(parents=True)
+    source.write_text(
+        "xi_A,Cpt_A,xi_B,Cpt_B\n"
+        "0.0,9.0,0.0,9.0\n"
+        "0.5,9.0,,\n"
+        "1.0,9.0,1.0,9.0\n",
+        encoding="utf-8",
+    )
+    records = [
+        _write_new_model(
+            tmp_path / "model",
+            dimension="3D",
+            section=section,
+            target="Cpt",
+            model=ConstantModel(value),
+            value=value,
+        )
+        for section, value in (("A", 1), ("B", 2))
+    ]
+    _write_registry(tmp_path / "model", "3D", records)
+    output = tmp_path / "output"
+    monkeypatch.setattr(wrapper, "PREDICTION_OUTPUT", str(output))
+
+    results = wrapper.predict_3d(
+        predict_dir=str(tmp_path / "input"),
+        output_dir=tmp_path / "model",
+        radial_mode="full",
+        partition=None,
+        model_name=None,
+        selection_split_mode="random",
+        selection_metric="rmse",
+    )
+
+    expected = output / source.relative_to(tmp_path / "input")
+    parsed = read_tabular_file(str(expected))
+    assert len(results) == 5
+    assert [row["Cpt_A"] for row in parsed["rows"]] == [1.0, 1.0, 1.0]
+    assert [parsed["rows"][index]["Cpt_B"] for index in (0, 2)] == [2.0, 2.0]
+    assert np.isnan(parsed["rows"][1]["xi_B"])
+    assert np.isnan(parsed["rows"][1]["Cpt_B"])
+    assert (output / "canonical_prediction_results_3d.json").exists()

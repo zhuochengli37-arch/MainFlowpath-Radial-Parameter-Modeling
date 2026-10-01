@@ -1,0 +1,14 @@
+{
+  "experiment_name": null,
+  "date": null,
+  "dataset": null,
+  "models": [],
+  "metrics": [
+    "RMSE",
+    "MAE",
+    "MAPE",
+    "R2",
+    "NRMSE_range"
+  ],
+  "notes": ""
+}

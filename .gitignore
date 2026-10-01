@@ -6,10 +6,15 @@ __pycache__/
 
 # Virtual environments and local interpreter bindings
 .venv/
+.venv-pysr/
+.venv-tabpfn/
 venv/
 env/
 ENV/
 .project_venv_python
+
+# Generated CondaPkg/Pixi bootstrap environments; Julia Project/Manifest stay tracked.
+envs/**/.CondaPkg/
 
 # Test, type-checker, linter, and coverage caches
 .pytest_cache/
@@ -66,6 +71,12 @@ data/**/output*/
 data/**/results*/
 data/**/models*/
 data/**/run_configs/
+
+# Keep lightweight formal-benchmark result contracts under version control.
+!/data/output/
+/data/output/*
+!/data/output/benchmark/
+!/data/output/benchmark/**
 
 # Large local databases are not source-controlled. Keep only the tiny files
 # referenced by the current unit/smoke tests; canonical regression fixtures

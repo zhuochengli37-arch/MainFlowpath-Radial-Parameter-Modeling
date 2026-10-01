@@ -117,12 +117,12 @@ Rho，也不强行统一两类部件的输出目标。
 | Legacy Validation | 是 | 不适用 | 是（兼容路径） | 是（兼容路径） |
 | Institute Single MAIN | 是 | 不适用 | 是 | 是 |
 | Institute INLET/OUTLET | 是 | 不适用 | 否 | 否 |
-| Institute Four MAIN | 是 | 是 | 是 | Canonical结果（最终宽表未实现） |
+| Institute Four MAIN | 是 | 是 | 是 | Direct-3D宽表及Canonical结果 |
 
 1D 工作线仍只按 `component + stage` 分区，section 不参与 1D partition；一个宽表文件只
 贡献一条工况记录。2D/3D训练与预测按 `component + stage + section` 分区。共享预测
-loader/core支持该Schema；当前wrapper只提供Canonical JSON调试输出，不将其描述为
-最终研究所Four-Section宽表。
+loader/core支持该Schema；Direct-3D wrapper现可按源列顺序和相对路径写出最终研究所
+Four-Section宽表，并保留Canonical JSON。2D/workline宽表仍未接入。
 
 ## 完整正式库 Adapter 审计
 
