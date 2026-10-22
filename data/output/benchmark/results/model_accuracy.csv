@@ -1,1 +1,1 @@
-model_key,family,component,stage,section,target,dataset,RMSE,MAE,MAPE,R2,NRMSE_range,sample_count,split_hash
+experiment_id,run_id,case_id,model_key,family,paper_family_code,component,stage,section,target,dataset,split_hash,split_seed,train_condition_hash,validation_condition_hash,test_condition_hash,stochasticity_type,model_seed,repeat_index,evaluation_subset,RMSE,MAE,MAPE,R2,NRMSE_range,NRMSE_range_reason,target_range,sample_count,train_sample_count,status

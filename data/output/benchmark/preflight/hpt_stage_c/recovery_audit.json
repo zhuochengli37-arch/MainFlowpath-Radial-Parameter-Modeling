@@ -1,0 +1,16 @@
+{
+  "expected_runs": 2600,
+  "unique_run_ids": 2600,
+  "completed_records_preserved": true,
+  "existing_output_restart": "FileExistsError",
+  "observed_reason": "experiment output already exists; records are preserved: D:\\Myprogram\\Python\\MainFlowpath_Radial_Parameter_Modeling\\01_DEV\\Project1\\data\\output\\benchmark\\preflight\\hpt_stage_c\\tabpfn",
+  "resume_supported": false,
+  "report_reconstruction_supported": true,
+  "model_and_prediction_restore": "all three special models passed fresh-process Val/Test restoration; max_abs_delta=0",
+  "atomic_record_write": true,
+  "atomic_model_metadata_prediction_writes": false,
+  "artifact_checksums_in_run_record": false,
+  "automatic_failure_skip_added": false,
+  "resume_code_implemented": false,
+  "formal_first_round_started": false
+}

@@ -1,1 +1,1 @@
-model_key,family,implementation_status,version,parameters,feature_order,target_definition
+experiment_id,run_id,case_id,model_key,family,paper_family_code,component,stage,section,target,dataset,split_hash,split_seed,train_condition_hash,validation_condition_hash,test_condition_hash,stochasticity_type,model_seed,repeat_index,implementation_status,version,parameters,feature_order,target_definition,model_path,metadata_path,status

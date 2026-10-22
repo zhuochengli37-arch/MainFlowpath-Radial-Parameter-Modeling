@@ -164,6 +164,15 @@ def _add_current_leaf_parser(
         aliases=list(aliases),
     )
     parser.set_defaults(handler=f"workflow:{workflow}")
+    if command == "benchmark-3d":
+        parser.add_argument("--formal-config", help="Frozen formal benchmark JSON configuration")
+        parser.add_argument("--prepare-only", action="store_true", help="Freeze/verify data and split without fitting")
+        parser.add_argument("--models", nargs="+", help="Explicit compatibility-check model keys")
+        parser.add_argument("--cases", nargs="+", help="Explicit compatibility-check case IDs")
+        parser.add_argument("--output", help="Separate compatibility-check output directory")
+        parser.add_argument("--resume", action="store_true", help="Resume the original frozen formal run plan")
+        parser.add_argument("--retry-runs", nargs="+", help="Explicitly authorize failed/interrupted/corrupt run IDs")
+        parser.add_argument("--recover-lock", action="store_true", help="Acknowledge an inspected unclean writer marker")
 
 
 def _add_generic_leaf_parser(
@@ -302,7 +311,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         workflow_name = handler.split(":", 1)[1]
         if extra_args:
             parser.error(f"Unrecognized args: {' '.join(extra_args)}")
-        forwarded_args = _generic_workflow_argv(args) if args.command == "generic" else ()
+        forwarded_args = _generic_workflow_argv(args) if args.command == "generic" else []
+        if args.command == "current" and args.current_command == "benchmark-3d":
+            for name in ("formal_config", "prepare_only", "models", "cases", "output", "resume", "retry_runs", "recover_lock"):
+                value = getattr(args, name, None)
+                if value:
+                    forwarded_args.append("--" + name.replace("_", "-"))
+                    if value is not True:
+                        forwarded_args.extend(value if isinstance(value, list) else [value])
         return run_workflow(
             workflow_name,
             forwarded_args,

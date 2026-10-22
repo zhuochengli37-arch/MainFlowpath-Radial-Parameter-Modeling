@@ -1,0 +1,337 @@
+{
+  "phase": "B",
+  "status": "passed",
+  "real_data_fits": 45,
+  "cases": 40,
+  "inventory_sha256": "c7d324cf4c09995397732204289285f84e5b3bee61fa9e49c6ab493dda970ebb",
+  "split_hash": "663a0a13704e64256e735bbaaa00912f651f066aabe27efe87bddaf0390bf415",
+  "condition_counts": {
+    "train": 37,
+    "validation": 12,
+    "test": 12
+  },
+  "database_unchanged": true,
+  "negative_MA_rows_retained": 66,
+  "negative_MA_conditions": 13,
+  "record_and_table_recovery": "passed",
+  "checks": [
+    {
+      "run_id": "HPTB_S1_RI_Cps__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.00362700002733618,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_RI_Cpt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.004347600042819977,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_RI_Cts__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0031867999932728708,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_RI_Ctt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.003516299999319017,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_RI_MA__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.00345810002181679,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_RO_Cps__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.004085499967914075,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_RO_Cpt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0036068999907001853,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_RO_Cts__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0032253999961540103,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_RO_Ctt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0034262000117450953,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_RO_MA__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0030636999872513115,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_SI_Cps__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0034672999754548073,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_SI_Cpt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0031411999952979386,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_SI_Cts__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.004317199985962361,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_SI_Ctt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.003249000001233071,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_SI_MA__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.004445099970325828,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_SO_Cps__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0035053999745287,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_SO_Cpt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.003508599998895079,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_SO_Cts__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0035247000050731003,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_SO_Ctt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.003434700018260628,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S1_SO_MA__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0038386000087484717,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RI_Cps__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.003716000006534159,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RI_Cpt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.00358700001379475,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RI_Cts__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.003726900031324476,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RI_Ctt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0036980999866500497,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RI_MA__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0035579000250436366,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RO_Cps__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.004272299993317574,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RO_Cpt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.004988800035789609,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RO_Cts__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0037829999928362668,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RO_Ctt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0038146000006236136,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RO_MA__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.003405099967494607,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_SI_Cps__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0034630000009201467,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_SI_Cpt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.00393220002297312,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_SI_Cts__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0034961000201292336,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_SI_Ctt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.003864099970087409,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_SI_MA__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.003436399972997606,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_SO_Cps__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0038406000239774585,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_SO_Cpt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0036945000174455345,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_SO_Cts__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.0038379000034183264,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_SO_Ctt__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.003718599968124181,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_SO_MA__ridge_deg2__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.003797499986831099,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RO_MA__ard_gpr__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 55.59875830000965,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RO_MA__gpr_matern__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 23.645615399989765,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RO_MA__random_forest__seed_2026",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.47915450000436977,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RO_MA__random_forest__seed_3407",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.5685776000027545,
+      "restore_prediction_max_delta": 0.0
+    },
+    {
+      "run_id": "HPTB_S2_RO_MA__random_forest__seed_42",
+      "status": "passed",
+      "training_rows": 1480,
+      "fit_time": 0.4403310000197962,
+      "restore_prediction_max_delta": 0.0
+    }
+  ],
+  "formal_first_round_started": false,
+  "selection_run": false,
+  "sample_efficiency_run": false
+}

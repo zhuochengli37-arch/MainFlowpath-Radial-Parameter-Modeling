@@ -1,0 +1,31 @@
+{
+  "experiment_id": "tabiclv2",
+  "purpose": "preflight_single_seed",
+  "planned_fits": 1,
+  "model_keys": [
+    "tabiclv2"
+  ],
+  "case_keys": [
+    "HPTB:S2:RO:Cpt"
+  ],
+  "inventory_sha256": "c7d324cf4c09995397732204289285f84e5b3bee61fa9e49c6ab493dda970ebb",
+  "split_hash": "663a0a13704e64256e735bbaaa00912f651f066aabe27efe87bddaf0390bf415",
+  "instance_sha256": "b21082665190d5a14121de9d319d20092eef3b372abdeab93ac0bfc432f0a81a",
+  "instance_path": "D:\\Myprogram\\Python\\MainFlowpath_Radial_Parameter_Modeling\\01_DEV\\Project1\\data\\output\\benchmark\\config\\hptb_pi_real_v1_instance.json",
+  "model_seeds": {
+    "tabiclv2": [
+      42
+    ]
+  },
+  "hardware": {
+    "platform": "Windows-10-10.0.19044-SP0",
+    "processor": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel"
+  },
+  "training_policy": {
+    "global_subsampling": false,
+    "gpr_subsampling": false,
+    "training_set": "all frozen train conditions",
+    "full_data_refit": false,
+    "test_used_for_fit_or_selection": false
+  }
+}

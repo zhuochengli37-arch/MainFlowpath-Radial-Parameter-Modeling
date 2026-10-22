@@ -13,6 +13,9 @@
 *.dat text eol=lf
 *.example text eol=lf
 
+# Canonical benchmark records also have saved byte-level audit hashes.
+/data/output/benchmark/**/records/*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
 # Native Windows scripts are distributed with CRLF line endings.
 *.ps1 text eol=crlf
 *.cmd text eol=crlf

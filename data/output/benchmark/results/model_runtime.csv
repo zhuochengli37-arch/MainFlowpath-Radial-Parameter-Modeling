@@ -1,1 +1,1 @@
-model_key,component,stage,section,target,fit_time,inference_time,memory,hardware
+experiment_id,run_id,case_id,model_key,family,paper_family_code,component,stage,section,target,dataset,split_hash,split_seed,train_condition_hash,validation_condition_hash,test_condition_hash,stochasticity_type,model_seed,repeat_index,fit_time,validation_inference_time,test_inference_time,memory,memory_note,hardware,status

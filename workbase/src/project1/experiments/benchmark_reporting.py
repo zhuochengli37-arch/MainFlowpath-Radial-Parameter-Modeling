@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import csv
 from collections import defaultdict
 from pathlib import Path
 
@@ -8,6 +9,111 @@ import numpy as np
 
 
 RADIAL_SPLIT_MODES = ("condition", "random", "rpm", "wcor")
+
+FORMAL_METRICS = ("RMSE", "MAE", "MAPE", "R2", "NRMSE_range")
+FORMAL_ID_FIELDS = ("experiment_id", "run_id", "case_id", "model_key", "family", "paper_family_code",
+                    "component", "stage", "section", "target", "dataset", "split_hash", "split_seed",
+                    "train_condition_hash", "validation_condition_hash", "test_condition_hash",
+                    "stochasticity_type", "model_seed", "repeat_index")
+FORMAL_RESULT_FIELDS = {
+    "model_accuracy": (*FORMAL_ID_FIELDS, "evaluation_subset", *FORMAL_METRICS, "NRMSE_range_reason",
+                       "target_range", "sample_count", "train_sample_count", "status"),
+    "model_runtime": (*FORMAL_ID_FIELDS, "fit_time", "validation_inference_time", "test_inference_time",
+                      "memory", "memory_note", "hardware", "status"),
+    "model_metadata": (*FORMAL_ID_FIELDS, "implementation_status", "version", "parameters", "feature_order",
+                       "target_definition", "model_path", "metadata_path", "status"),
+    "model_summary": (*FORMAL_ID_FIELDS, "accuracy_record", "runtime_record", "record_path", "status",
+                      "failure_stage", "exception_type", "reason"),
+}
+
+
+def formal_metrics(y_true: np.ndarray, y_pred: np.ndarray, metric_protocol: dict) -> dict[str, object]:
+    from project1.experiments.benchmark_partitioning import metrics
+
+    truth = np.asarray(y_true, dtype=float).reshape(-1)
+    prediction = np.asarray(y_pred, dtype=float).reshape(-1)
+    if not len(truth) or truth.shape != prediction.shape or not np.isfinite(truth).all() or not np.isfinite(prediction).all():
+        raise ValueError("formal metrics require equal-length, nonempty, finite truth/prediction arrays")
+    base = metrics(truth, prediction)
+    result = {name: base[name.lower()] if np.isfinite(base[name.lower()]) else None for name in FORMAL_METRICS[:4]}
+    rule = metric_protocol["definitions"]["NRMSE_range"]["undefined_behavior"]
+    target_range = float(np.ptp(truth))
+    tolerance = rule["absolute_tolerance"] + rule["relative_tolerance"] * max(1.0, float(np.max(np.abs(truth))))
+    undefined = target_range <= tolerance
+    result.update(NRMSE_range=None if undefined else result["RMSE"] / target_range,
+                  NRMSE_range_reason=rule["reason"] if undefined else None, target_range=target_range,
+                  sample_count=len(truth))
+    return result
+
+
+def _write_formal_csv(path: Path, fields: tuple[str, ...], rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8-sig", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({key: json.dumps(value, ensure_ascii=False, sort_keys=True) if isinstance(value, (dict, list)) else value
+                             for key, value in row.items()})
+
+
+def rebuild_formal_reports(output_dir: str | Path) -> dict[str, object]:
+    """Rebuild tables from durable per-run records, without fitting or choosing models."""
+    from project1.experiments.benchmark_instance import write_benchmark_json, load_formal_records
+
+    output = Path(output_dir)
+    experiment = json.loads((output / "experiment.json").read_text(encoding="utf-8"))
+    records = list(load_formal_records(output, experiment).values())
+    tables = {name: [] for name in FORMAL_RESULT_FIELDS}
+    groups = defaultdict(list)
+    manifest = []
+    for record in records:
+        identity = {key: record.get(key) for key in FORMAL_ID_FIELDS}
+        groups[(record["case_id"], record["model_key"])].append(record)
+        for subset, values in record.get("evaluations", {}).items():
+            tables["model_accuracy"].append({**identity, **values, "evaluation_subset": subset,
+                                             "train_sample_count": record["train_sample_count"], "status": record["status"]})
+        tables["model_runtime"].append({**identity, **record.get("runtime", {}), "status": record["status"]})
+        tables["model_metadata"].append({**identity, **record.get("metadata", {}), "status": record["status"]})
+        tables["model_summary"].append({**identity, "accuracy_record": "model_accuracy.csv",
+                                        "runtime_record": "model_runtime.csv", "record_path": f"records/{record['run_id']}.json",
+                                        **{key: record.get(key) for key in ("status", "failure_stage", "exception_type", "reason")}})
+        if record["status"] == "passed":
+            manifest.append(record["artifact"])
+    for name, fields in FORMAL_RESULT_FIELDS.items():
+        _write_formal_csv(output / "results" / f"{name}.csv", fields, tables[name])
+    aggregate = []
+    for _, runs in sorted(groups.items()):
+        first = runs[0]
+        expected_seeds = set(experiment["model_seeds"][first["model_key"]])
+        complete = (len(runs) == first["scheduled_runs"] == len(expected_seeds)
+                    and {r["model_seed"] for r in runs} == expected_seeds
+                    and all(r["status"] == "passed" for r in runs))
+        for subset in ("validation", "test"):
+            row = {key: first.get(key) for key in FORMAL_ID_FIELDS if key not in {"run_id", "model_seed", "repeat_index"}}
+            row.update(evaluation_subset=subset, scheduled_runs=first["scheduled_runs"], recorded_runs=len(runs),
+                       successful_runs=sum(r["status"] == "passed" for r in runs),
+                       status="complete" if complete else "incomplete")
+            for metric in FORMAL_METRICS:
+                values = [r.get("evaluations", {}).get(subset, {}).get(metric) for r in runs]
+                valid = complete and all(v is not None for v in values)
+                row[f"{metric}_mean"] = float(np.mean(values)) if valid else None
+                row[f"{metric}_sample_std"] = float(np.std(values, ddof=1)) if valid and len(values) > 1 else None
+            aggregate.append(row)
+    aggregate_fields = tuple(aggregate[0]) if aggregate else ("case_id", "model_key", "evaluation_subset", "status")
+    _write_formal_csv(output / "results" / "model_accuracy_aggregate.csv", aggregate_fields, aggregate)
+    write_benchmark_json(output / "models" / "models_manifest.json", manifest)
+    summary = {"experiment_id": experiment["experiment_id"], "purpose": experiment["purpose"],
+               "planned_fits": experiment["planned_fits"], "recorded_runs": len(records),
+               "passed_runs": sum(r["status"] == "passed" for r in records),
+               "failed_runs": sum(r["status"] == "failed" for r in records),
+               "incomplete_runs": sum(r["status"] not in {"passed", "failed"} for r in records),
+               "missing_runs": experiment["planned_fits"] - len(records),
+               "complete": len(records) == experiment["planned_fits"] and all(r["status"] == "passed" for r in records),
+               "dataset_sha256": experiment["inventory_sha256"], "split_hash": experiment["split_hash"],
+               "selection_run": False, "sample_efficiency_run": False}
+    write_benchmark_json(output / "reports" / "benchmark_summary.json", summary)
+    write_benchmark_json(output / "reports" / "failures.json", [r for r in records if r["status"] != "passed"])
+    return summary
 
 
 def real_partition_sample_count(items: list[dict[str, object]], partition: str) -> int:

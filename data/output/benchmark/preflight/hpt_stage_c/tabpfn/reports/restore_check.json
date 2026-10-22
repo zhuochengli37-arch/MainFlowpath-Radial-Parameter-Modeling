@@ -1,0 +1,56 @@
+{
+  "status": "passed",
+  "model_key": "tabpfn",
+  "case_id": "HPTB:S2:RO:Cpt",
+  "model_seed": 42,
+  "training_rows": 1480,
+  "new_process_restore": true,
+  "factory_parameters_unchanged": true,
+  "checks": {
+    "validation": {
+      "rows": 480,
+      "max_abs_delta": 0.0,
+      "metrics": {
+        "RMSE": 0.016805505873330996,
+        "MAE": 0.012356055591085154,
+        "MAPE": 0.03808416512077697,
+        "R2": 0.9939346434296057,
+        "NRMSE_range": 0.023465072044370126,
+        "NRMSE_range_reason": null,
+        "target_range": 0.7161923833667951,
+        "sample_count": 480
+      }
+    },
+    "test": {
+      "rows": 480,
+      "max_abs_delta": 0.0,
+      "metrics": {
+        "RMSE": 0.015421072564889936,
+        "MAE": 0.01161399245146424,
+        "MAPE": 0.039787588356123366,
+        "R2": 0.9908900188327128,
+        "NRMSE_range": 0.027666032100467097,
+        "NRMSE_range_reason": null,
+        "target_range": 0.5574009496153797,
+        "sample_count": 480
+      }
+    }
+  },
+  "runtime": {
+    "fit_time": 9.950350400002208,
+    "validation_inference_time": 14.579481199965812,
+    "test_inference_time": 15.565984199987724,
+    "memory": null,
+    "memory_note": "not measured by common runner",
+    "hardware": {
+      "platform": "Windows-10-10.0.19044-SP0",
+      "processor": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel"
+    }
+  },
+  "instance_sha256": "b21082665190d5a14121de9d319d20092eef3b372abdeab93ac0bfc432f0a81a",
+  "split_hash": "663a0a13704e64256e735bbaaa00912f651f066aabe27efe87bddaf0390bf415",
+  "restore_tolerance": {
+    "rtol": 1e-06,
+    "atol": 1e-08
+  }
+}

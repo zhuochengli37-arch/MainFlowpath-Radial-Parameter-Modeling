@@ -1,0 +1,13 @@
+{
+  "experiment_id": "ridge_coverage",
+  "purpose": "stage_b_compatibility",
+  "planned_fits": 40,
+  "recorded_runs": 40,
+  "passed_runs": 40,
+  "failed_runs": 0,
+  "missing_runs": 0,
+  "dataset_sha256": "c7d324cf4c09995397732204289285f84e5b3bee61fa9e49c6ab493dda970ebb",
+  "split_hash": "663a0a13704e64256e735bbaaa00912f651f066aabe27efe87bddaf0390bf415",
+  "selection_run": false,
+  "sample_efficiency_run": false
+}

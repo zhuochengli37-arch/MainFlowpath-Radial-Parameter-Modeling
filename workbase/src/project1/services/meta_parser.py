@@ -89,7 +89,7 @@ def _prefixed_value(text: str, prefixes: tuple[str, ...]) -> float | None:
 
 
 def _wcor_from_stem(stem: str) -> float | None:
-    value = _prefixed_value(stem, ("PHI_", "WCOR_"))
+    value = _prefixed_value(stem, ("PHI_", "WCOR_", "PI_"))
     if value is not None:
         return value
     match = re.match(r"W\d*COR[_-](.+)", stem, flags=re.IGNORECASE)
@@ -111,7 +111,7 @@ def _flow_parameter_name(stem: str) -> str | None:
     match = re.match(r"(W\d*COR)[_-]", stem, flags=re.IGNORECASE)
     if match:
         return match.group(1)
-    for prefix in ("PHI_", "WCOR_"):
+    for prefix in ("PHI_", "WCOR_", "PI_"):
         if stem.upper().startswith(prefix):
             return stem[: len(prefix) - 1]
     return None

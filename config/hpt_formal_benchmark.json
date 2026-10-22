@@ -1,0 +1,18 @@
+{
+  "dataset": "HPTB_PI_real_v1",
+  "input_dir": "D:/Myprogram/Python/MasterThesis/DataProcessing/reference/DATABASE_HPTB",
+  "instance_path": "data/output/benchmark/config/hptb_pi_real_v1_instance.json",
+  "output_dir": "data/output/benchmark/runs/hptb_pi_first_round_v1",
+  "feature_order": ["n", "PI", "xi"],
+  "second_parameter_source_name": "PI",
+  "second_parameter_definition": "total-to-total pressure drop ratio; original PI filename value, no conversion or normalization",
+  "expected_inventory": {
+    "conditions": 61,
+    "main_files": 122,
+    "cases": 40,
+    "profile_points": [40]
+  },
+  "model_configuration_policy": "existing factory defaults; change only prescribed model/search seeds",
+  "gpr_policy": "all valid training rows in formal and CV modes; original kernels and algorithm parameters unchanged",
+  "sample_efficiency": "not instantiated; integer rounding remains pending"
+}

@@ -1,0 +1,253 @@
+{
+  "date": "2026-10-22 Asia/Shanghai",
+  "real_data_fit_count": 3,
+  "models": [
+    {
+      "model_key": "pysr",
+      "case_id": "HPTB:S2:RO:Cpt",
+      "status": "passed",
+      "seed": 42,
+      "train_rows": 1480,
+      "evaluations": {
+        "validation": {
+          "RMSE": 0.01147720256255821,
+          "MAE": 0.00500112026036041,
+          "MAPE": 0.013144109538076536,
+          "R2": 0.9971710501372195,
+          "NRMSE_range": 0.016025306648200146,
+          "NRMSE_range_reason": null,
+          "target_range": 0.7161923833667951,
+          "sample_count": 480
+        },
+        "test": {
+          "RMSE": 0.011414071489807692,
+          "MAE": 0.006080584984865222,
+          "MAPE": 0.01827471944892139,
+          "R2": 0.9950092077236146,
+          "NRMSE_range": 0.02047730901370671,
+          "NRMSE_range_reason": null,
+          "target_range": 0.5574009496153797,
+          "sample_count": 480
+        }
+      },
+      "runtime": {
+        "fit_time": 559.6372588999802,
+        "validation_inference_time": 8.880925900011789,
+        "test_inference_time": 8.57856080000056,
+        "memory": null,
+        "memory_note": "not measured by common runner",
+        "hardware": {
+          "platform": "Windows-10-10.0.19044-SP0",
+          "processor": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel"
+        }
+      },
+      "restore_max_abs_delta": {
+        "validation": 0.0,
+        "test": 0.0
+      },
+      "artifact_sha256": {
+        "records/HPTB_S2_RO_Cpt__pysr__seed_42.json": "7f5935b6038a2e9d27e290e0f0c6647ade16bcb0bbfc4e15bcacdeaa339f7013",
+        "models/HPTB_S2_RO/pysr_Cpt_seed_42.pkl": "e4bf7f68890803c813ea07e353feac844eccfada6dd075a2760a9fa6ef4829a9",
+        "models/HPTB_S2_RO/pysr_Cpt_seed_42.json": "af677c1a05d655b70ee6f92a06eeb71c827c07f1b75c2aa04341bcc1037ee5e7",
+        "predictions/HPTB_S2_RO_Cpt__pysr__seed_42.npz": "da816c635a836d8eacfea70a589642baa31d0513e3ce9dc0e01cea7e72d4c386"
+      },
+      "versions": {
+        "python": "3.10.10",
+        "pysr": "2.5.2",
+        "juliacall": "0.9.36",
+        "numpy": "2.2.6",
+        "pandas": "2.3.3",
+        "scikit-learn": "1.7.2",
+        "julia": "1.11.9",
+        "symbolic_regression_jl": "2.4.2"
+      },
+      "search_config": {
+        "niterations": 2,
+        "populations": 2,
+        "population_size": 10,
+        "tournament_selection_n": 5,
+        "ncycles_per_iteration": 20,
+        "timeout_in_seconds": 120.0,
+        "binary_operators": [
+          "+",
+          "-",
+          "*",
+          "/"
+        ],
+        "unary_operators": [],
+        "constraints": {},
+        "maxsize": 12,
+        "maxdepth": 6,
+        "model_selection": "best",
+        "random_state": 42,
+        "deterministic": true,
+        "parallelism": "serial",
+        "precision": 64,
+        "progress": false,
+        "verbosity": 0
+      },
+      "selected_equation": "n / (w * n)",
+      "selected_complexity": 5,
+      "official_fit_time": 44.715290299966,
+      "symbol_mapping": {
+        "n": "relative corrected speed",
+        "w": "PI, original total-to-total pressure drop ratio",
+        "xi": "relative span coordinate"
+      }
+    },
+    {
+      "model_key": "tabpfn",
+      "case_id": "HPTB:S2:RO:Cpt",
+      "status": "passed",
+      "seed": 42,
+      "train_rows": 1480,
+      "evaluations": {
+        "validation": {
+          "RMSE": 0.016805505873330996,
+          "MAE": 0.012356055591085154,
+          "MAPE": 0.03808416512077697,
+          "R2": 0.9939346434296057,
+          "NRMSE_range": 0.023465072044370126,
+          "NRMSE_range_reason": null,
+          "target_range": 0.7161923833667951,
+          "sample_count": 480
+        },
+        "test": {
+          "RMSE": 0.015421072564889936,
+          "MAE": 0.01161399245146424,
+          "MAPE": 0.039787588356123366,
+          "R2": 0.9908900188327128,
+          "NRMSE_range": 0.027666032100467097,
+          "NRMSE_range_reason": null,
+          "target_range": 0.5574009496153797,
+          "sample_count": 480
+        }
+      },
+      "runtime": {
+        "fit_time": 9.950350400002208,
+        "validation_inference_time": 14.579481199965812,
+        "test_inference_time": 15.565984199987724,
+        "memory": null,
+        "memory_note": "not measured by common runner",
+        "hardware": {
+          "platform": "Windows-10-10.0.19044-SP0",
+          "processor": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel"
+        }
+      },
+      "restore_max_abs_delta": {
+        "validation": 0.0,
+        "test": 0.0
+      },
+      "artifact_sha256": {
+        "records/HPTB_S2_RO_Cpt__tabpfn__seed_42.json": "74289c3f47c6e8421462a2db355baf841bef55780c7b1cd2421823ce5806e96c",
+        "models/HPTB_S2_RO/tabpfn_Cpt_seed_42.pkl": "3229b6fb79fa4243380ac57c632645fc5bb965aac185c598fc2fa8eec6250279",
+        "models/HPTB_S2_RO/tabpfn_Cpt_seed_42.json": "12b66cf946abb302cbd19d2da6fd15d3311f1ce3cc1e508822d3262b841b8462",
+        "predictions/HPTB_S2_RO_Cpt__tabpfn__seed_42.npz": "5aa2343ce7153ccf7d9f1b517ba007e9b66249b1d9389ccc325a14ad8f25add5"
+      },
+      "versions": {
+        "python": "3.10.10",
+        "tabpfn": "9.0.0",
+        "torch": "2.14.0+cpu",
+        "numpy": "2.2.6",
+        "scipy": "1.15.3",
+        "pandas": "2.3.3",
+        "scikit-learn": "1.7.2"
+      },
+      "checkpoint_sha256": "14e0b81285bca7a6d1ef121169f27f651f76dff49cad6c0b8779d5c836018550",
+      "checkpoint_revision": "06bf2ba35c80a92a3b9abb436b99cf49e7a0365e",
+      "configuration": {
+        "n_estimators": 1,
+        "random_state": 42,
+        "fit_mode": "fit_preprocessors",
+        "n_preprocessing_jobs": 1
+      },
+      "offline": true
+    },
+    {
+      "model_key": "tabiclv2",
+      "case_id": "HPTB:S2:RO:Cpt",
+      "status": "passed",
+      "seed": 42,
+      "train_rows": 1480,
+      "evaluations": {
+        "validation": {
+          "RMSE": 0.018638221539258797,
+          "MAE": 0.013210333327593629,
+          "MAPE": 0.04105546513290463,
+          "R2": 0.9925396002911372,
+          "NRMSE_range": 0.026024043220958557,
+          "NRMSE_range_reason": null,
+          "target_range": 0.7161923833667951,
+          "sample_count": 480
+        },
+        "test": {
+          "RMSE": 0.01806955884648849,
+          "MAE": 0.012803398524577965,
+          "MAPE": 0.04216469923846189,
+          "R2": 0.9874921283195557,
+          "NRMSE_range": 0.0324175243313757,
+          "NRMSE_range_reason": null,
+          "target_range": 0.5574009496153797,
+          "sample_count": 480
+        }
+      },
+      "runtime": {
+        "fit_time": 5.690960799984168,
+        "validation_inference_time": 100.31738069996936,
+        "test_inference_time": 110.53939280001214,
+        "memory": null,
+        "memory_note": "not measured by common runner",
+        "hardware": {
+          "platform": "Windows-10-10.0.19044-SP0",
+          "processor": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel"
+        }
+      },
+      "restore_max_abs_delta": {
+        "validation": 0.0,
+        "test": 0.0
+      },
+      "artifact_sha256": {
+        "records/HPTB_S2_RO_Cpt__tabiclv2__seed_42.json": "a6feef57bbedc9cdf1fcd234e50a0cf88b5160d605a815d8f5417249c67f7759",
+        "models/HPTB_S2_RO/tabiclv2_Cpt_seed_42.pkl": "1b149059dd4ed3a40a96e7f8b9a352222af678280281072455d95555d5652406",
+        "models/HPTB_S2_RO/tabiclv2_Cpt_seed_42.json": "5c1194da906ba6ecdf881470ae4c6ed3b28713645b4f32fadeb86d52f3a21cfb",
+        "predictions/HPTB_S2_RO_Cpt__tabiclv2__seed_42.npz": "94210834b56e8a30ab854ee4da6208211bf478bb9cc7aff90460ab7ea3a22aab"
+      },
+      "versions": {
+        "tabicl": "2.2.0",
+        "torch": "2.2.1"
+      },
+      "checkpoint_path": "C:\\Users\\GOD\\.cache\\huggingface\\hub\\models--jingang--TabICL\\snapshots\\4dcd344ece2c00be9e831fdd35bed57b5ad83e19\\tabicl-regressor-v2-20260212.ckpt",
+      "checkpoint_sha256": "0db9cb538f114e79026bf08f45f41ad8dd7ad2de2aaca9a5ca8cd3bd9748ae7a",
+      "configuration": {
+        "allow_auto_download": true,
+        "batch_size": 1,
+        "checkpoint_version": "tabicl-regressor-v2-20260212.ckpt",
+        "device": "cpu",
+        "n_estimators": 8,
+        "n_jobs": 1,
+        "offload_mode": false,
+        "random_state": 42,
+        "use_amp": false,
+        "use_fa3": false,
+        "verbose": false
+      }
+    }
+  ],
+  "frozen_instance_sha256": "b21082665190d5a14121de9d319d20092eef3b372abdeab93ac0bfc432f0a81a",
+  "inventory_sha256": "c7d324cf4c09995397732204289285f84e5b3bee61fa9e49c6ab493dda970ebb",
+  "split_hash": "663a0a13704e64256e735bbaaa00912f651f066aabe27efe87bddaf0390bf415",
+  "regression_tests": {
+    "passed": 226,
+    "warnings": 25,
+    "skipped": 0,
+    "seconds": 56.03
+  },
+  "resume_supported": true,
+  "ma_definition_status": "confirmed_by_user_closed",
+  "ma_definition_metadata": "ma_definition_audit.json",
+  "formal_first_round_started": false,
+  "ready_for_full_2600_fit_run": true,
+  "pending_items": [],
+  "resume_patch_validation": "../hpt_resume/resume_acceptance.json",
+  "formal_first_round_authorized": false
+}

@@ -78,6 +78,11 @@ data/**/run_configs/
 !/data/output/benchmark/
 !/data/output/benchmark/**
 
+# Keep formal records/tables, but exclude large fitted models and prediction arrays.
+/data/output/benchmark/**/models/
+/data/output/benchmark/**/predictions/
+/data/output/benchmark/**/.benchmark.lock
+
 # Large local databases are not source-controlled. Keep only the tiny files
 # referenced by the current unit/smoke tests; canonical regression fixtures
 # live in ../../04_TEST_DATA.

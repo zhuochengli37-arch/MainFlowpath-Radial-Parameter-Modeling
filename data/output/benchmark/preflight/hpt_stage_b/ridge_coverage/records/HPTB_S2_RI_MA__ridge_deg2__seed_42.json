@@ -1,0 +1,216 @@
+{
+  "experiment_id": "ridge_coverage",
+  "run_id": "HPTB_S2_RI_MA__ridge_deg2__seed_42",
+  "case_id": "HPTB:S2:RI:MA",
+  "model_key": "ridge_deg2",
+  "family": "classical_regression",
+  "paper_family_code": "I",
+  "component": "HPTB",
+  "stage": 2,
+  "section": "RI",
+  "target": "MA",
+  "dataset": "HPTB_PI_real_v1",
+  "split_hash": "663a0a13704e64256e735bbaaa00912f651f066aabe27efe87bddaf0390bf415",
+  "split_seed": 42,
+  "train_condition_hash": "3bd9bbe9dbb7e256f9b325d21fbb4b68bf5cd38f71280e9765365307fdc54ca2",
+  "validation_condition_hash": "97d266758e8ceccf82b3fce636ed9223baa42c2cb063d7eba2a5cc9835eab896",
+  "test_condition_hash": "024fcc226760af109e72193e2562e02f52e6426c808beeb2f0305363d05ca15e",
+  "stochasticity_type": "deterministic",
+  "model_seed": 42,
+  "repeat_index": 0,
+  "scheduled_runs": 1,
+  "train_sample_count": 1480,
+  "train_condition_ids": [
+    "0.5|1.22896488144",
+    "0.5|1.29524174052",
+    "0.5|1.44726638662",
+    "0.5|1.55969648355",
+    "0.5|4.0949064822",
+    "0.5|5.10640232275",
+    "0.6|1.41716824078",
+    "0.6|1.70141750532",
+    "0.6|2.1139803094",
+    "0.6|2.91798848222",
+    "0.6|3.88177276674",
+    "0.6|4.28516631184",
+    "0.6|4.70185205243",
+    "0.6|5.51139546883",
+    "0.7|2.15897232468",
+    "0.7|3.73233269391",
+    "0.7|4.25205056546",
+    "0.7|4.86928383753",
+    "0.8|1.66536911189",
+    "0.8|4.2854667335",
+    "0.8|6.14460003179",
+    "0.9|1.75996561866",
+    "0.9|2.00623348422",
+    "0.9|2.67534621832",
+    "0.9|3.11262188958",
+    "0.9|4.39823572245",
+    "0.9|5.66679884502",
+    "0.9|6.34977383588",
+    "1.1|2.53432561579",
+    "1.1|3.03457741242",
+    "1.1|4.33031120216",
+    "1.1|5.75966460167",
+    "1|2.00815916963",
+    "1|2.61277908605",
+    "1|3.11340728673",
+    "1|3.86927232115",
+    "1|5.41491017538"
+  ],
+  "evaluations": {
+    "validation": {
+      "RMSE": 0.018939851850594287,
+      "MAE": 0.015324605675505377,
+      "MAPE": 0.10198739252017378,
+      "R2": 0.938635373992614,
+      "NRMSE_range": 0.06027364437598472,
+      "NRMSE_range_reason": null,
+      "target_range": 0.3142310714190137,
+      "sample_count": 480
+    },
+    "test": {
+      "RMSE": 0.02064590442688152,
+      "MAE": 0.015722356001635008,
+      "MAPE": 0.07348113274131762,
+      "R2": 0.9121357724502209,
+      "NRMSE_range": 0.07538096019040778,
+      "NRMSE_range_reason": null,
+      "target_range": 0.2738875224556865,
+      "sample_count": 480
+    }
+  },
+  "runtime": {
+    "fit_time": 0.0035579000250436366,
+    "validation_inference_time": 0.0008082999847829342,
+    "test_inference_time": 0.0007826999644748867,
+    "memory": null,
+    "memory_note": "not measured by common runner",
+    "hardware": {
+      "platform": "Windows-10-10.0.19044-SP0",
+      "processor": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel"
+    }
+  },
+  "status": "passed",
+  "failure_stage": null,
+  "metadata": {
+    "implementation_status": "implemented",
+    "version": "factory_snapshot",
+    "parameters": {
+      "memory": null,
+      "polynomialfeatures": {
+        "class": "sklearn.preprocessing._polynomial.PolynomialFeatures",
+        "parameters": {
+          "degree": 2,
+          "include_bias": false,
+          "interaction_only": false,
+          "order": "C"
+        }
+      },
+      "polynomialfeatures__degree": 2,
+      "polynomialfeatures__include_bias": false,
+      "polynomialfeatures__interaction_only": false,
+      "polynomialfeatures__order": "C",
+      "ridge": {
+        "class": "sklearn.linear_model._ridge.Ridge",
+        "parameters": {
+          "alpha": 0.1,
+          "copy_X": true,
+          "fit_intercept": true,
+          "max_iter": null,
+          "positive": false,
+          "random_state": 42,
+          "solver": "auto",
+          "tol": 0.0001
+        }
+      },
+      "ridge__alpha": 0.1,
+      "ridge__copy_X": true,
+      "ridge__fit_intercept": true,
+      "ridge__max_iter": null,
+      "ridge__positive": false,
+      "ridge__random_state": 42,
+      "ridge__solver": "auto",
+      "ridge__tol": 0.0001,
+      "standardscaler": {
+        "class": "sklearn.preprocessing._data.StandardScaler",
+        "parameters": {
+          "copy": true,
+          "with_mean": true,
+          "with_std": true
+        }
+      },
+      "standardscaler__copy": true,
+      "standardscaler__with_mean": true,
+      "standardscaler__with_std": true,
+      "steps": [
+        [
+          "standardscaler",
+          {
+            "class": "sklearn.preprocessing._data.StandardScaler",
+            "parameters": {
+              "copy": true,
+              "with_mean": true,
+              "with_std": true
+            }
+          }
+        ],
+        [
+          "polynomialfeatures",
+          {
+            "class": "sklearn.preprocessing._polynomial.PolynomialFeatures",
+            "parameters": {
+              "degree": 2,
+              "include_bias": false,
+              "interaction_only": false,
+              "order": "C"
+            }
+          }
+        ],
+        [
+          "ridge",
+          {
+            "class": "sklearn.linear_model._ridge.Ridge",
+            "parameters": {
+              "alpha": 0.1,
+              "copy_X": true,
+              "fit_intercept": true,
+              "max_iter": null,
+              "positive": false,
+              "random_state": 42,
+              "solver": "auto",
+              "tol": 0.0001
+            }
+          }
+        ]
+      ],
+      "transform_input": null,
+      "verbose": false
+    },
+    "feature_order": [
+      "n",
+      "PI",
+      "xi"
+    ],
+    "target_definition": "MA",
+    "model_path": "models/HPTB_S2_RI/ridge_deg2_MA_seed_42.pkl",
+    "metadata_path": "models/HPTB_S2_RI/ridge_deg2_MA_seed_42.json"
+  },
+  "artifact": {
+    "model_dimension": "3D",
+    "component": "HPTB",
+    "stage": 2,
+    "station": "MAIN",
+    "section": "RI",
+    "partition": "HPTB:S2:RI",
+    "target": "MA",
+    "model": "ridge_deg2",
+    "path": "models/HPTB_S2_RI/ridge_deg2_MA_seed_42.pkl",
+    "model_seed": 42,
+    "train_samples": 1480,
+    "sample_count": 1480,
+    "metrics": {}
+  },
+  "prediction_path": "predictions/HPTB_S2_RI_MA__ridge_deg2__seed_42.npz"
+}

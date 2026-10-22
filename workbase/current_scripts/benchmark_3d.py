@@ -4,6 +4,8 @@
 """
 
 from pathlib import Path
+import argparse
+import json
 import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -22,7 +24,7 @@ if __name__ == "__main__":
 from workbase.common.config_loader import load_config, save_config_snapshot
 from workbase.common.logger_config import setup_logger
 from workbase.common.validators import ValidationError, validate_directory_exists
-from project1.experiments.benchmark_runners import run_benchmark
+from project1.experiments.benchmark_runners import run_benchmark, run_formal_benchmark
 
 CONFIG_PATH = "config/benchmark_config.yaml"
 config = load_config(CONFIG_PATH)
@@ -38,7 +40,27 @@ PARTITION_MODE = config.partition_mode
 N_SPLITS = config.n_splits_3d
 
 
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Existing CV or explicit formal Direct-3D benchmark")
+    parser.add_argument("--formal-config")
+    parser.add_argument("--prepare-only", action="store_true")
+    parser.add_argument("--models", nargs="+")
+    parser.add_argument("--cases", nargs="+")
+    parser.add_argument("--output")
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--retry-runs", nargs="+")
+    parser.add_argument("--recover-lock", action="store_true")
+    args = parser.parse_args(argv)
+    if args.formal_config:
+        result = run_formal_benchmark(args.formal_config, prepare_only=args.prepare_only,
+                                      model_keys=args.models, case_keys=args.cases, output_dir=args.output,
+                                      resume=args.resume, retry_runs=args.retry_runs, recover_lock=args.recover_lock)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        if result.get("failed_runs", 0) or result.get("incomplete_runs", 0):
+            raise SystemExit(1)
+        return result
+    if args.prepare_only or args.models or args.cases or args.output or args.resume or args.retry_runs or args.recover_lock:
+        parser.error("formal benchmark options require --formal-config")
     logger.info("=" * 70)
     logger.info("3D Benchmark 开始")
     logger.info("=" * 70)

@@ -1,0 +1,56 @@
+{
+  "status": "passed",
+  "model_key": "pysr",
+  "case_id": "HPTB:S2:RO:Cpt",
+  "model_seed": 42,
+  "training_rows": 1480,
+  "new_process_restore": true,
+  "factory_parameters_unchanged": true,
+  "checks": {
+    "validation": {
+      "rows": 480,
+      "max_abs_delta": 0.0,
+      "metrics": {
+        "RMSE": 0.01147720256255821,
+        "MAE": 0.00500112026036041,
+        "MAPE": 0.013144109538076536,
+        "R2": 0.9971710501372195,
+        "NRMSE_range": 0.016025306648200146,
+        "NRMSE_range_reason": null,
+        "target_range": 0.7161923833667951,
+        "sample_count": 480
+      }
+    },
+    "test": {
+      "rows": 480,
+      "max_abs_delta": 0.0,
+      "metrics": {
+        "RMSE": 0.011414071489807692,
+        "MAE": 0.006080584984865222,
+        "MAPE": 0.01827471944892139,
+        "R2": 0.9950092077236146,
+        "NRMSE_range": 0.02047730901370671,
+        "NRMSE_range_reason": null,
+        "target_range": 0.5574009496153797,
+        "sample_count": 480
+      }
+    }
+  },
+  "runtime": {
+    "fit_time": 559.6372588999802,
+    "validation_inference_time": 8.880925900011789,
+    "test_inference_time": 8.57856080000056,
+    "memory": null,
+    "memory_note": "not measured by common runner",
+    "hardware": {
+      "platform": "Windows-10-10.0.19044-SP0",
+      "processor": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel"
+    }
+  },
+  "instance_sha256": "b21082665190d5a14121de9d319d20092eef3b372abdeab93ac0bfc432f0a81a",
+  "split_hash": "663a0a13704e64256e735bbaaa00912f651f066aabe27efe87bddaf0390bf415",
+  "restore_tolerance": {
+    "rtol": 1e-06,
+    "atol": 1e-08
+  }
+}
