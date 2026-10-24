@@ -121,3 +121,26 @@ data/**/run_configs/
 # Offline binary bundles are release/deployment inputs, not source history.
 offline_packages/
 offline_installers/
+
+# Generated benchmark runs and machine-specific experiment identities.
+/data/output/benchmark/runs/
+/config/hpt_formal_benchmark.newpc.json
+/data/output/benchmark/config/hptb_pi_newpc_cpu_v1_instance.json
+/data/output/benchmark/config/hptb_pi_newpc_cpu_v1_instance.csv
+
+# Local dotenv secrets; keep distributable environment examples.
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+!.env.*.sample
+!.env.template
+!.env.*.template
+
+# Generated checkpoints and pretrained model weights.
+rtdl_checkpoints/
+model_cache/
+*.safetensors
+*.ckpt
+*.pt

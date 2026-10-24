@@ -23,7 +23,7 @@ CURRENT_STEPS = [
     Step("current_benchmark_1d", "workbase/current_scripts/benchmark_1d.py", "current"),
     Step("current_predict_1d", "workbase/current_scripts/predict_1d.py", "current"),
     Step("current_benchmark_2d", "workbase/current_scripts/benchmark_2d.py", "current"),
-    Step("current_predict_2d", "workbase/current_scripts/predict_2d_with_workline.py", "current"),
+    Step("current_predict_2d", "workbase/current_scripts/predict_2d.py", "current"),
     Step("current_benchmark_3d", "workbase/current_scripts/benchmark_3d.py", "current"),
     Step("current_predict_3d", "workbase/current_scripts/predict_3d.py", "current"),
 ]

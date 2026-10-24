@@ -73,7 +73,7 @@ class ExternalPySRRegressor(RegressorMixin, BaseEstimator):
         environment = os.environ.copy()
         environment_root = python_path.parent.parent
         julia_depot = environment.get(
-            "JULIA_DEPOT_PATH", str(environment_root / "julia_depot")
+            "JULIA_DEPOT_PATH", str((environment_root / "julia_depot").resolve())
         )
         julia_project = self._project_root() / "envs" / "pysr-julia"
         julia_executable = (
